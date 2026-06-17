@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Executables
+*.exe
+
+# Optional: common build artifacts
+dist/
+build/
+out/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
