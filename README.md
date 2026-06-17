@@ -17,7 +17,7 @@ A real-time multiplayer implementation of the classic Settlers of Catan board ga
 
 ## 🎮 How to Play
 
-1. **Play Now** → [https://](https://)
+1. **Play Now** → [https://catan.ra9.cloudns.asia](https://catan.ra9.cloudns.asia)
 2. **Create or Join** - One player creates a game and shares the 6-letter code
 3. **Setup Phase** - Each player places 2 settlements and 2 roads
 4. **Main Game** - Roll dice, collect resources, build, and trade
@@ -51,12 +51,12 @@ Open http://localhost:5173 in your browser.
 
 ## 🌐 Deployment
 
-**Live Game:** [https://](https://)
+**Live Game:** [https://catan.ra9.cloudns.asia](https://catan.ra9.cloudns.asia)
 
 | Component | Platform | URL |
 |-----------|----------|-----|
-| Frontend | Vercel | https:// |
-| Backend | Render | https:// |
+| Frontend | Vercel | https://catan.ra9.cloudns.asia |
+| Backend | Render | https://catans.ra9.cloudns.asia |
 
 ### ⚠️ Free Tier Notice
 
