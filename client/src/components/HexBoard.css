@@ -1,0 +1,93 @@
+.hex-board {
+  width: 100%;
+  height: 100%;
+  max-width: 500px;
+  max-height: 440px;
+}
+
+.hex {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.hex.clickable {
+  cursor: pointer;
+}
+
+.hex.clickable:hover {
+  transform: translateY(-2px);
+}
+
+.hex.clickable:hover path:first-child {
+  filter: brightness(1.1) drop-shadow(0 5px 10px rgba(0,0,0,0.6));
+}
+
+.hex.has-robber path:first-child {
+  filter: brightness(0.6) sepia(0.3);
+}
+
+.robber {
+  animation: robberBob 2s ease-in-out infinite;
+}
+
+@keyframes robberBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.vertex-placeholder {
+  fill: rgba(255, 255, 255, 0.2);
+  stroke: rgba(255, 255, 255, 0.5);
+  stroke-width: 2;
+  stroke-dasharray: 4 2;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vertex-placeholder:hover {
+  fill: rgba(212, 169, 66, 0.5);
+  stroke: var(--accent-gold);
+  stroke-width: 3;
+}
+
+.edge-placeholder {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edge-placeholder:hover {
+  stroke: rgba(212, 169, 66, 0.7) !important;
+}
+
+.settlement {
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.settlement.upgradeable {
+  cursor: pointer;
+}
+
+.settlement.upgradeable:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 10px var(--accent-gold));
+}
+
+.city {
+  animation: cityGlow 3s ease-in-out infinite;
+}
+
+@keyframes cityGlow {
+  0%, 100% { filter: url(#hex-shadow); }
+  50% { filter: url(#hex-shadow) drop-shadow(0 0 4px rgba(255, 255, 255, 0.3)); }
+}
+
+@keyframes waterFlow {
+  0% { transform: translateX(0) translateY(0); }
+  50% { transform: translateX(-10px) translateY(-5px); }
+  100% { transform: translateX(0) translateY(0); }
+}
+
+.hex-board {
+  overflow: visible;
+}
+
+
