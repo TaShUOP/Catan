@@ -13,6 +13,17 @@ import InfoPopup, { useInfoPopup, INFO_DATA } from './InfoPopup';
 import Confetti from './Confetti';
 import './GameBoard.css';
 
+const AVAILABLE_COLORS = [
+  { value: '#e63946', label: 'Red' },
+  { value: '#457b9d', label: 'Blue' },
+  { value: '#f4a261', label: 'Orange' },
+  { value: '#2a9d8f', label: 'Teal' },
+  { value: '#6a994e', label: 'Green' },
+  { value: '#9d4edd', label: 'Purple' },
+  { value: '#e07b53', label: 'Coral' },
+  { value: '#4a90d9', label: 'Steel Blue' }
+];
+
 function GameBoard({ socket, gameState, playerId, gameCode, chatMessages, onLeaveGame, addNotification }) {
   const [selectedAction, setSelectedAction] = useState(null); // 'settlement', 'road', 'city'
   const [lastPlacedSettlement, setLastPlacedSettlement] = useState(null);
@@ -439,6 +450,14 @@ function GameBoard({ socket, gameState, playerId, gameCode, chatMessages, onLeav
     });
   }, [socket, addNotification]);
 
+  const handleColorChange = useCallback((color) => {
+    socket.emit('changeColor', { color }, (response) => {
+      if (!response.success) {
+        addNotification(response.error);
+      }
+    });
+  }, [socket, addNotification]);
+
   return (
     <div className="game-board">
       {/* Header */}
@@ -497,11 +516,39 @@ function GameBoard({ socket, gameState, playerId, gameCode, chatMessages, onLeav
           
           {isWaiting && (
             <div className="waiting-controls">
+              <div className="color-selector" style={{ marginBottom: '20px', padding: '10px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
+                <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#ccc' }}>Choose Your Color</h4>
+                <div className="color-swatches" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {AVAILABLE_COLORS.map(c => {
+                    const isTaken = gameState.players.some(p => p.color === c.value && p.id !== myPlayer.id);
+                    return (
+                      <button
+                        key={c.value}
+                        className={`color-swatch ${myPlayer.color === c.value ? 'selected' : ''}`}
+                        style={{ 
+                          backgroundColor: c.value, 
+                          opacity: isTaken ? 0.3 : 1,
+                          width: '30px',
+                          height: '30px',
+                          borderRadius: '50%',
+                          border: myPlayer.color === c.value ? '2px solid white' : '2px solid transparent',
+                          cursor: isTaken ? 'not-allowed' : 'pointer'
+                        }}
+                        disabled={isTaken}
+                        title={isTaken ? 'Color taken' : c.label}
+                        onClick={() => handleColorChange(c.value)}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+
               {isHost && (
                 <>
                   <button 
                     className="shuffle-btn"
                     onClick={handleShuffleBoard}
+                    disabled={gameState.mapType === 'standard'} // Can't shuffle standard beginner map
                   >
                     🔀 Shuffle Board
                   </button>

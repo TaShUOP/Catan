@@ -11,6 +11,8 @@ function Lobby({ onCreateGame, onJoinGame, error, setError, serverUrl, setServer
   const [tempUrl, setTempUrl] = useState('');
   const [isExtended, setIsExtended] = useState(false);
   const [enableSpecialBuild, setEnableSpecialBuild] = useState(true);
+  const [mapType, setMapType] = useState('random');
+  const [autoSetup, setAutoSetup] = useState(false);
 
   const handleSaveSettings = () => {
     localStorage.setItem('catanServerUrl', tempUrl);
@@ -27,7 +29,7 @@ function Lobby({ onCreateGame, onJoinGame, error, setError, serverUrl, setServer
     }
     
     if (mode === 'create') {
-      onCreateGame(playerName.trim(), isExtended, enableSpecialBuild);
+      onCreateGame(playerName.trim(), isExtended, enableSpecialBuild, mapType, autoSetup);
     } else if (mode === 'join') {
       if (!gameCode.trim()) {
         setError('Please enter a game code');
@@ -174,6 +176,46 @@ function Lobby({ onCreateGame, onJoinGame, error, setError, serverUrl, setServer
                     </label>
                   </div>
                 )}
+                
+                {/* Map Type Selection */}
+                <div className="form-group game-mode-group">
+                  <label>Map Type</label>
+                  <div className="game-mode-options">
+                    <button
+                      type="button"
+                      className={`mode-option ${mapType === 'standard' ? 'active' : ''}`}
+                      onClick={() => setMapType('standard')}
+                    >
+                      <span className="mode-icon">🗺️</span>
+                      <span className="mode-label">Standard</span>
+                      <span className="mode-desc">Beginner Layout</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`mode-option ${mapType === 'random' ? 'active' : ''}`}
+                      onClick={() => setMapType('random')}
+                    >
+                      <span className="mode-icon">🎲</span>
+                      <span className="mode-label">Random</span>
+                      <span className="mode-desc">Variable Board</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Auto Setup Toggle */}
+                <div className="form-group special-build-option" style={{ marginTop: '1rem' }}>
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={autoSetup}
+                      onChange={(e) => setAutoSetup(e.target.checked)}
+                    />
+                    <span className="checkbox-text">
+                      <span className="checkbox-title">⚡ Quick Start (Auto-Setup)</span>
+                      <span className="checkbox-desc">Automatically place initial settlements</span>
+                    </span>
+                  </label>
+                </div>
               </>
             )}
             

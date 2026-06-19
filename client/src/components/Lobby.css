@@ -659,3 +659,34 @@
   0% { opacity: 0.8; transform: scale(1); }
   100% { opacity: 1; transform: scale(1.05); }
 }
+
+.hotseat-players {
+  margin-top: 1rem;
+}
+
+.player-count-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.player-count-controls button {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.player-count-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hotseat-names {
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 5px;
+}

@@ -187,6 +187,23 @@ const TERRAIN_DISTRIBUTION_LARGE = [
 // Number tokens (excluding desert which gets none)
 const NUMBER_TOKENS_STANDARD = [2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12];
 
+// Fixed beginner setup arrays (only for standard 3-4 player mode)
+const TERRAIN_FIXED = [
+  TERRAIN.MOUNTAINS, TERRAIN.PASTURE, TERRAIN.FOREST,
+  TERRAIN.FIELDS, TERRAIN.HILLS, TERRAIN.PASTURE, TERRAIN.HILLS,
+  TERRAIN.FIELDS, TERRAIN.FOREST, TERRAIN.DESERT, TERRAIN.FOREST, TERRAIN.MOUNTAINS,
+  TERRAIN.FOREST, TERRAIN.MOUNTAINS, TERRAIN.FIELDS, TERRAIN.PASTURE,
+  TERRAIN.HILLS, TERRAIN.FIELDS, TERRAIN.PASTURE
+];
+
+const NUMBERS_FIXED = [
+  10, 2, 9,
+  12, 6, 4, 10,
+  9, 11, null, 3, 8,
+  8, 3, 4, 5,
+  5, 6, 11
+];
+
 // Extended number tokens (28 tokens for 30 hexes - 2 deserts)
 const NUMBER_TOKENS_EXTENDED = [
   2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6,
@@ -770,7 +787,7 @@ export function getAdjacentVertices(vKey, hexes) {
  * @param enableSpecialBuild - Whether to enable special building phase (5-8 player rule)
  * @returns Complete game state object
  */
-export function createGame(gameId, hostPlayer, isExtended = false, enableSpecialBuild = true) {
+export function createGame(gameId, hostPlayer, isExtended = false, enableSpecialBuild = true, mapType = 'random', autoSetup = false) {
   // Select board configuration based on game mode
   const HEX_POSITIONS = isExtended ? HEX_POSITIONS_LARGE : HEX_POSITIONS_STANDARD;
   const TERRAIN_DISTRIBUTION = isExtended ? TERRAIN_DISTRIBUTION_LARGE : TERRAIN_DISTRIBUTION_STANDARD;
@@ -783,9 +800,15 @@ export function createGame(gameId, hostPlayer, isExtended = false, enableSpecial
     ? [...DEV_CARD_DISTRIBUTION, ...DEV_CARD_DISTRIBUTION] // Double deck (50 total)
     : [...DEV_CARD_DISTRIBUTION];
   
-  // Shuffle terrain and numbers
-  const shuffledTerrain = shuffle(TERRAIN_DISTRIBUTION);
-  const shuffledNumbers = shuffle(NUMBER_TOKENS);
+  // Shuffle terrain and numbers (or use fixed for standard mode)
+  let shuffledTerrain, shuffledNumbers;
+  if (mapType === 'standard' && !isExtended) {
+    shuffledTerrain = [...TERRAIN_FIXED];
+    shuffledNumbers = NUMBERS_FIXED.filter(n => n !== null);
+  } else {
+    shuffledTerrain = shuffle(TERRAIN_DISTRIBUTION);
+    shuffledNumbers = shuffle(NUMBER_TOKENS);
+  }
   
   const hexes = {};
   let numberIndex = 0;
@@ -844,6 +867,8 @@ export function createGame(gameId, hostPlayer, isExtended = false, enableSpecial
     turnPhase: 'roll', // roll, main, robber, discard, specialBuild
     isExtended, // 5-8 player extension flag
     maxPlayers: MAX_PLAYERS,
+    mapType, // 'random' or 'standard'
+    autoSetup, // true to skip manual placement
     enableSpecialBuild, // Whether special building phase is enabled (optional rule)
     specialBuildingPhase: false, // True during special building phase
     specialBuildIndex: 0, // Which player is currently in special build phase
@@ -935,18 +960,23 @@ export function startGame(game) {
     [playerOrder[i], playerOrder[j]] = [playerOrder[j], playerOrder[i]];
   }
   
-  // Reorder players and assign turn numbers
+  // Reorder players and assign turn numbers (but keep their chosen colors)
   const reorderedPlayers = playerOrder.map((oldIdx, newIdx) => {
     const player = game.players[oldIdx];
     player.turnOrder = newIdx + 1;
-    player.color = PLAYER_COLORS[newIdx]; // Reassign colors based on new order
     return player;
   });
   game.players = reorderedPlayers;
   
-  game.phase = 'setup';
-  game.setupPhase = 0;
-  game.currentPlayerIndex = 0;
+  if (game.autoSetup) {
+    // Auto-place buildings and move straight to playing phase
+    autoPlaceInitialBuildings(game);
+  } else {
+    // Normal manual setup phase
+    game.phase = 'setup';
+    game.setupPhase = 0;
+    game.currentPlayerIndex = 0;
+  }
   
   return { success: true, turnOrder: game.players.map(p => ({ id: p.id, name: p.name, turnOrder: p.turnOrder })) };
 }
@@ -1821,6 +1851,54 @@ export function respondToTrade(game, playerId, accept) {
   }
 }
 
+/** Execute a direct hotseat trade without proposal phase */
+export function executeHotseatTrade(game, offererId, partnerId, offer, request) {
+  const offererIndex = game.players.findIndex(p => p.id === offererId);
+  const partnerIndex = game.players.findIndex(p => p.id === partnerId);
+  
+  if (offererIndex === -1 || partnerIndex === -1) {
+    return { success: false, error: 'Player not found' };
+  }
+  
+  if (game.currentPlayerIndex !== offererIndex) {
+    return { success: false, error: 'Not your turn' };
+  }
+  
+  if (game.turnPhase !== 'main') {
+    return { success: false, error: 'Can only trade during main phase' };
+  }
+
+  const offerer = game.players[offererIndex];
+  const partner = game.players[partnerIndex];
+
+  // Verify offerer has offered resources
+  for (const [resource, amount] of Object.entries(offer)) {
+    if (offerer.resources[resource] < amount) {
+      return { success: false, error: `You do not have enough ${resource}` };
+    }
+  }
+
+  // Verify partner has requested resources
+  for (const [resource, amount] of Object.entries(request)) {
+    if (partner.resources[resource] < amount) {
+      return { success: false, error: `${partner.name} does not have enough ${resource}` };
+    }
+  }
+
+  // Execute trade
+  for (const [resource, amount] of Object.entries(offer)) {
+    offerer.resources[resource] -= amount;
+    partner.resources[resource] += amount;
+  }
+  
+  for (const [resource, amount] of Object.entries(request)) {
+    partner.resources[resource] -= amount;
+    offerer.resources[resource] += amount;
+  }
+
+  return { success: true };
+}
+
 /** Cancel an active trade offer */
 export function cancelTrade(game, playerId) {
   if (!game.tradeOffer) {
@@ -2364,5 +2442,124 @@ export function getPlayersOnHex(game, hKey, excludePlayer = null) {
   }
   
   return Array.from(players);
+}
+
+// ============================================================================
+// AUTO SETUP PHASE
+// ============================================================================
+
+/**
+ * Automatically places 2 settlements and 2 roads for all players.
+ * Gives starting resources for the second settlement.
+ * Advances the game directly to the playing phase.
+ */
+export function autoPlaceInitialBuildings(game) {
+  game.players.forEach((player, pIdx) => {
+    // Need to place 2 settlements and 2 roads per player
+    for (let i = 0; i < 2; i++) {
+      const validVertices = Object.keys(game.vertices).filter(vKey => {
+        // Can't place if building exists
+        if (game.vertices[vKey].building) return false;
+        
+        // Catan distance rule: cannot be adjacent to another building
+        // Need to check equivalent vertices
+        const match = vKey.match(/v_(-?\d+)_(-?\d+)_(\d+)/);
+        if (!match) return false;
+        const q = parseInt(match[1]), r = parseInt(match[2]), dir = parseInt(match[3]);
+        
+        let hasAdj = false;
+        const equivalents = getEquivalentVertices(q, r, dir);
+        for (const eq of equivalents) {
+          const eqKey = vertexKey(eq.q, eq.r, eq.dir);
+          // 1. check if this vertex itself has a building (handled above but good to double check)
+          if (game.vertices[eqKey]?.building) hasAdj = true;
+          
+          // 2. check adjacent vertices
+          const adjVertices = getAdjacentVertices(eqKey, game.hexes);
+          for (const adjV of adjVertices) {
+            const matchA = adjV.match(/v_(-?\d+)_(-?\d+)_(\d+)/);
+            if (matchA) {
+              const aq = parseInt(matchA[1]), ar = parseInt(matchA[2]), adir = parseInt(matchA[3]);
+              const aEquivs = getEquivalentVertices(aq, ar, adir);
+              for (const aEq of aEquivs) {
+                const aEqKey = vertexKey(aEq.q, aEq.r, aEq.dir);
+                if (game.vertices[aEqKey]?.building) {
+                  hasAdj = true;
+                }
+              }
+            }
+          }
+        }
+        if (hasAdj) return false;
+        
+        // Ensure vertex is on land (connected to at least one hex)
+        const onBoard = equivalents.some(eq => game.hexes[hexKey(eq.q, eq.r)]);
+        return onBoard;
+      });
+      
+      // For simplicity, pick a random valid vertex (works for both standard and random maps)
+      const shuffled = shuffle(validVertices);
+      if (shuffled.length === 0) continue;
+      
+      const vKey = shuffled[0];
+      
+      // Place settlement
+      game.vertices[vKey].building = 'settlement';
+      game.vertices[vKey].owner = pIdx;
+      player.settlements--;
+      player.victoryPoints++;
+      
+      // Place road on first available adjacent edge
+      const adjacentEdges = getVertexEdges(vKey);
+      for (const eKey of adjacentEdges) {
+        let isOccupied = false;
+        const eMatch = eKey.match(/e_(-?\d+)_(-?\d+)_(\d+)/);
+        if (eMatch) {
+          const eq = parseInt(eMatch[1]), er = parseInt(eMatch[2]), edir = parseInt(eMatch[3]);
+          const eEquivs = getEquivalentEdges(eq, er, edir);
+          for (const eEq of eEquivs) {
+            const eEqKey = edgeKey(eEq.q, eEq.r, eEq.dir);
+            if (game.edges[eEqKey]?.road) {
+              isOccupied = true;
+            }
+          }
+        }
+        
+        if (!isOccupied && eMatch) {
+          game.edges[eKey] = { road: true, owner: pIdx };
+          player.roads--;
+          break;
+        }
+      }
+      
+      // If second settlement, distribute starting resources
+      if (i === 1) {
+        const match = vKey.match(/v_(-?\d+)_(-?\d+)_(\d+)/);
+        if (match) {
+          const q = parseInt(match[1]), r = parseInt(match[2]), dir = parseInt(match[3]);
+          const equivalents = getEquivalentVertices(q, r, dir);
+          
+          // Use a Set so we don't count the same hex twice if multiple equivalent vertices reference it
+          const hexesClaimed = new Set();
+          equivalents.forEach(eq => {
+            const hKey = hexKey(eq.q, eq.r);
+            if (!hexesClaimed.has(hKey)) {
+              hexesClaimed.add(hKey);
+              const hex = game.hexes[hKey];
+              if (hex && hex.resource) {
+                player.resources[hex.resource]++;
+              }
+            }
+          });
+        }
+      }
+    }
+  });
+  
+  // Set game to playing state
+  game.phase = 'playing';
+  game.setupPhase = 2; // Setup complete
+  
+  updateLongestRoad(game);
 }
 

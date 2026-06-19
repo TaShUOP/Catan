@@ -199,7 +199,7 @@ io.on('connection', (socket) => {
   // --------------------------------------------------------------------
   
   /** Create a new game room as the host */
-  socket.on('createGame', ({ playerName, isExtended = false, enableSpecialBuild = true }, callback) => {
+  socket.on('createGame', ({ playerName, isExtended = false, enableSpecialBuild = true, mapType = 'random', autoSetup = false }, callback) => {
     // Check game limit
     if (games.size >= MAX_CONCURRENT_GAMES) {
       callback({ 
@@ -215,7 +215,7 @@ io.on('connection', (socket) => {
     const game = GameLogic.createGame(gameCode, {
       id: playerId,
       name: playerName
-    }, isExtended, enableSpecialBuild);
+    }, isExtended, enableSpecialBuild, mapType, autoSetup);
     
     // Add timestamp for cleanup
     game.createdAt = Date.now();
@@ -226,12 +226,34 @@ io.on('connection', (socket) => {
     
     console.log(`Game ${gameCode} created by ${playerName}`);
     
-    callback({
-      success: true,
-      gameCode,
+    callback({ 
+      success: true, 
       playerId,
+      gameCode: gameCode.toUpperCase(),
       gameState: GameLogic.getPlayerView(game, playerId)
     });
+  });
+
+  /** Allow a player to pick their color in the lobby */
+  socket.on('changeColor', ({ color }, callback) => {
+    const playerInfo = playerSockets.get(socket.id);
+    if (!playerInfo) return callback({ success: false, error: 'Not in a game' });
+    
+    const game = games.get(playerInfo.gameId);
+    if (!game || game.phase !== 'waiting') return callback({ success: false, error: 'Cannot change color now' });
+    
+    // Check if color is already taken
+    const isTaken = game.players.some(p => p.color === color && p.id !== playerInfo.playerId);
+    if (isTaken) return callback({ success: false, error: 'Color already taken' });
+    
+    const player = game.players.find(p => p.id === playerInfo.playerId);
+    if (player) {
+      player.color = color;
+      broadcastGameState(playerInfo.gameId);
+      if (callback) callback({ success: true });
+    } else {
+      if (callback) callback({ success: false, error: 'Player not found' });
+    }
   });
   
   /** Join an existing game room using a game code */
