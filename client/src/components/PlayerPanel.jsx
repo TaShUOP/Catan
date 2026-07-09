@@ -1,11 +1,11 @@
 import './PlayerPanel.css';
 
-function PlayerPanel({ player, isCurrentTurn, isMe, longestRoad, largestArmy, onRightClick, gameOver = false }) {
+function PlayerPanel({ player, isCurrentTurn, isMe, longestRoad, largestArmy, gameOver = false, isCitiesAndKnights, onRightClick }) {
   let totalCards = typeof player.resources === 'number' 
     ? player.resources 
-    : Object.values(player.resources).reduce((a, b) => a + b, 0);
+    : Object.values(player.resources || {}).reduce((a, b) => a + b, 0);
     
-  if (player.commodities) {
+  if (isCitiesAndKnights && player.commodities) {
     if (typeof player.commodities === 'number') {
       totalCards += player.commodities;
     } else {
@@ -20,7 +20,6 @@ function PlayerPanel({ player, isCurrentTurn, isMe, longestRoad, largestArmy, on
   const scienceCards = player.progressCards?.science?.length || 0;
   const politicsCards = player.progressCards?.politics?.length || 0;
   const tradeCards = player.progressCards?.trade?.length || 0;
-  const isCitiesAndKnights = !!player.progressCards;
 
   const hiddenVP = player.hiddenVictoryPoints || 0;
 
@@ -128,7 +127,7 @@ function PlayerPanel({ player, isCurrentTurn, isMe, longestRoad, largestArmy, on
         </div>
       </div>
       
-      {player.cityImprovements && (
+      {isCitiesAndKnights && player.cityImprovements && (
         <div className="player-city-improvements">
           <div className="improvement-stat science" title="Science (Paper)"><span className="icon">📗</span> {player.cityImprovements.science}/5</div>
           <div className="improvement-stat politics" title="Politics (Coin)"><span className="icon">📘</span> {player.cityImprovements.politics}/5</div>
@@ -169,7 +168,7 @@ function PlayerPanel({ player, isCurrentTurn, isMe, longestRoad, largestArmy, on
         <span className="road-length-value">{player.roadLength || 0}</span>
       </div>
       
-      {player.cKKnights && (
+      {isCitiesAndKnights && player.cKKnights && (
         <div className="player-knights" style={{ padding: '2px 8px', fontSize: '0.75rem', color: '#b0b0b0', display: 'flex', gap: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
           {(player.cKKnights.inactive.basic > 0 || player.cKKnights.active.basic > 0) && (
              <span title="Basic Knights">🛡️ {player.cKKnights.inactive.basic + player.cKKnights.active.basic} ({player.cKKnights.active.basic}⚡)</span>

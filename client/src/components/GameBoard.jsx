@@ -543,6 +543,7 @@ function GameBoard({ socket, gameState, playerId, gameCode, chatMessages, onLeav
               longestRoad={gameState.longestRoadPlayer === idx}
               largestArmy={gameState.largestArmyPlayer === idx}
               gameOver={gameState.phase === 'finished'}
+              isCitiesAndKnights={gameState.isCitiesAndKnights}
               onRightClick={(e, key, extra) => {
                 if (extra) {
                   // Custom info passed

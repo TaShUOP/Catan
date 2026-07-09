@@ -916,17 +916,19 @@ export function createGame(gameId, hostPlayer, isExtended = false, enableSpecial
       color: PLAYER_COLORS[0],
       turnOrder: null, // Will be set when game starts
       resources: { brick: 0, lumber: 0, wool: 0, grain: 0, ore: 0 },
-      commodities: { paper: 0, coin: 0, cloth: 0 },
-      cityImprovements: { science: 0, politics: 0, trade: 0 },
-      cKKnights: {
-        inactive: { basic: 0, strong: 0, mighty: 0 },
-        active: { basic: 0, strong: 0, mighty: 0 },
-        hasMovedThisTurn: { basic: 0, strong: 0, mighty: 0 } // knights activated this turn can't be used
-      },
+      ...(isCitiesAndKnights ? {
+        commodities: { paper: 0, coin: 0, cloth: 0 },
+        cityImprovements: { science: 0, politics: 0, trade: 0 },
+        cKKnights: {
+          inactive: { basic: 0, strong: 0, mighty: 0 },
+          active: { basic: 0, strong: 0, mighty: 0 },
+          hasMovedThisTurn: { basic: 0, strong: 0, mighty: 0 }
+        },
+        progressCards: { science: [], politics: [], trade: [] },
+        newProgressCards: { science: [], politics: [], trade: [] }
+      } : {}),
       developmentCards: [],
-      progressCards: { science: [], politics: [], trade: [] },
       newDevCards: [], // Cards bought this turn (can't be played)
-      newProgressCards: { science: [], politics: [], trade: [] }, // Cards acquired this turn
       knightsPlayed: 0,
       victoryPoints: 0,
       hiddenVictoryPoints: 0, // VP from dev cards (secret until win)
@@ -979,17 +981,19 @@ export function addPlayer(game, player) {
     color: PLAYER_COLORS[game.players.length],
     turnOrder: null, // Will be set when game starts
     resources: { brick: 0, lumber: 0, wool: 0, grain: 0, ore: 0 },
-    commodities: { paper: 0, coin: 0, cloth: 0 },
-    cityImprovements: { science: 0, politics: 0, trade: 0 },
-    cKKnights: {
-      inactive: { basic: 0, strong: 0, mighty: 0 },
-      active: { basic: 0, strong: 0, mighty: 0 },
-      hasMovedThisTurn: { basic: 0, strong: 0, mighty: 0 }
-    },
+    ...(game.isCitiesAndKnights ? {
+      commodities: { paper: 0, coin: 0, cloth: 0 },
+      cityImprovements: { science: 0, politics: 0, trade: 0 },
+      cKKnights: {
+        inactive: { basic: 0, strong: 0, mighty: 0 },
+        active: { basic: 0, strong: 0, mighty: 0 },
+        hasMovedThisTurn: { basic: 0, strong: 0, mighty: 0 }
+      },
+      progressCards: { science: [], politics: [], trade: [] },
+      newProgressCards: { science: [], politics: [], trade: [] }
+    } : {}),
     developmentCards: [],
-    progressCards: { science: [], politics: [], trade: [] },
     newDevCards: [],
-    newProgressCards: { science: [], politics: [], trade: [] },
     knightsPlayed: 0,
     victoryPoints: 0,
     hiddenVictoryPoints: 0, // VP from dev cards (secret until win)
