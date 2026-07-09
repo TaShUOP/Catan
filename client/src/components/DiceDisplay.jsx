@@ -45,8 +45,15 @@ function DiceDisplay({ roll, onRightClick }) {
       style={{ cursor: 'context-menu' }}
     >
       <div className="dice-container">
-        <div className="die">{DICE_FACES[roll.die1]}</div>
-        <div className="die">{DICE_FACES[roll.die2]}</div>
+        <div className="die die-white">{DICE_FACES[roll.die1]}</div>
+        {roll.eventDie && (
+          <div className="die die-event" title={`Event: ${roll.eventDie}`}>
+            {roll.eventDie === 'barbarian' ? '🏴‍☠️' : 
+             roll.eventDie === 'science' ? '📗' : 
+             roll.eventDie === 'politics' ? '📘' : '📒'}
+          </div>
+        )}
+        <div className={`die ${roll.eventDie ? 'die-red' : ''}`}>{DICE_FACES[roll.die2]}</div>
       </div>
       <div className="dice-total">
         {roll.total}

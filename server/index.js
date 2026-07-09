@@ -199,7 +199,7 @@ io.on('connection', (socket) => {
   // --------------------------------------------------------------------
   
   /** Create a new game room as the host */
-  socket.on('createGame', ({ playerName, isExtended = false, enableSpecialBuild = true, mapType = 'random', autoSetup = false }, callback) => {
+  socket.on('createGame', ({ playerName, isExtended = false, enableSpecialBuild = true, mapType = 'random', autoSetup = false, isCitiesAndKnights = false }, callback) => {
     // Check game limit
     if (games.size >= MAX_CONCURRENT_GAMES) {
       callback({ 
@@ -215,7 +215,7 @@ io.on('connection', (socket) => {
     const game = GameLogic.createGame(gameCode, {
       id: playerId,
       name: playerName
-    }, isExtended, enableSpecialBuild, mapType, autoSetup);
+    }, isExtended, enableSpecialBuild, mapType, autoSetup, isCitiesAndKnights);
     
     // Add timestamp for cleanup
     game.createdAt = Date.now();
@@ -561,6 +561,61 @@ io.on('connection', (socket) => {
   });
   
   // --------------------------------------------------------------------
+  // CITIES & KNIGHTS
+  // --------------------------------------------------------------------
+  
+  /** Buy a city improvement */
+  socket.on('buyCityImprovement', ({ track }, callback) => {
+    const playerInfo = playerSockets.get(socket.id);
+    if (!playerInfo) {
+      callback({ success: false, error: 'Not in a game' });
+      return;
+    }
+    
+    const game = games.get(playerInfo.gameId);
+    const result = GameLogic.buyCityImprovement(game, playerInfo.playerId, track);
+    
+    if (result.success) {
+      broadcastGameState(playerInfo.gameId);
+    }
+    
+    callback(result);
+  });
+  
+  socket.on('recruitKnight', (callback) => {
+    const playerInfo = playerSockets.get(socket.id);
+    if (!playerInfo) return callback({ success: false, error: 'Not in a game' });
+    
+    const game = games.get(playerInfo.gameId);
+    const result = GameLogic.recruitKnight(game, playerInfo.playerId);
+    
+    if (result.success) broadcastGameState(playerInfo.gameId);
+    callback(result);
+  });
+  
+  socket.on('activateKnight', ({ level }, callback) => {
+    const playerInfo = playerSockets.get(socket.id);
+    if (!playerInfo) return callback({ success: false, error: 'Not in a game' });
+    
+    const game = games.get(playerInfo.gameId);
+    const result = GameLogic.activateKnight(game, playerInfo.playerId, level);
+    
+    if (result.success) broadcastGameState(playerInfo.gameId);
+    callback(result);
+  });
+  
+  socket.on('upgradeKnight', ({ fromLevel }, callback) => {
+    const playerInfo = playerSockets.get(socket.id);
+    if (!playerInfo) return callback({ success: false, error: 'Not in a game' });
+    
+    const game = games.get(playerInfo.gameId);
+    const result = GameLogic.upgradeKnight(game, playerInfo.playerId, fromLevel);
+    
+    if (result.success) broadcastGameState(playerInfo.gameId);
+    callback(result);
+  });
+  
+  // --------------------------------------------------------------------
   // DEVELOPMENT CARDS
   // --------------------------------------------------------------------
   
@@ -595,6 +650,28 @@ io.on('connection', (socket) => {
     
     if (result.success) {
       broadcastToGame(playerInfo.gameId, 'devCardPlayed', { 
+        cardType, 
+        playerId: playerInfo.playerId 
+      });
+      broadcastGameState(playerInfo.gameId);
+    }
+    
+    callback(result);
+  });
+  
+  /** Play a progress card */
+  socket.on('playProgressCard', ({ track, cardType, params }, callback) => {
+    const playerInfo = playerSockets.get(socket.id);
+    if (!playerInfo) {
+      callback({ success: false, error: 'Not in a game' });
+      return;
+    }
+    
+    const game = games.get(playerInfo.gameId);
+    const result = GameLogic.playProgressCard(game, playerInfo.playerId, track, cardType, params);
+    
+    if (result.success) {
+      broadcastToGame(playerInfo.gameId, 'progressCardPlayed', { 
         cardType, 
         playerId: playerInfo.playerId 
       });

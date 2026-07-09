@@ -42,6 +42,13 @@ export const RESOURCES = {
   ORE: 'ore'
 };
 
+/** Commodities for Cities & Knights */
+export const COMMODITIES = {
+  PAPER: 'paper', // from Forest
+  COIN: 'coin',   // from Mountains
+  CLOTH: 'cloth'  // from Pasture
+};
+
 /** 
  * Terrain types mapped to their produced resources and display colors
  * Desert produces no resources and is where the robber starts
@@ -60,7 +67,9 @@ export const BUILDING_COSTS = {
   road: { brick: 1, lumber: 1 },
   settlement: { brick: 1, lumber: 1, wool: 1, grain: 1 },
   city: { ore: 3, grain: 2 },
-  developmentCard: { ore: 1, grain: 1, wool: 1 }
+  developmentCard: { ore: 1, grain: 1, wool: 1 },
+  knight: { ore: 1, wool: 1 },
+  activateKnight: { grain: 1 }
 };
 
 /** Types of development cards available */
@@ -83,6 +92,32 @@ const DEV_CARD_DISTRIBUTION = [
   ...Array(2).fill(DEV_CARDS.YEAR_OF_PLENTY),
   ...Array(2).fill(DEV_CARDS.MONOPOLY)
 ];
+
+/** Types of progress cards available (C&K) */
+export const PROGRESS_CARDS = {
+  // Science (Green)
+  INVENTOR: 'inventor', // Take 2 free resources (Year of Plenty)
+  ENGINEER: 'engineer', // Build 2 free roads (Road Building)
+  
+  // Politics (Blue)
+  CONSTITUTION: 'constitution', // +1 VP
+  
+  // Trade (Yellow)
+  COMMERCIAL_MONOPOLY: 'commercialMonopoly' // Steal all of one resource (Monopoly)
+};
+
+const PROGRESS_CARD_DISTRIBUTION = {
+  science: [
+    ...Array(9).fill(PROGRESS_CARDS.INVENTOR),
+    ...Array(9).fill(PROGRESS_CARDS.ENGINEER)
+  ],
+  politics: [
+    ...Array(18).fill(PROGRESS_CARDS.CONSTITUTION)
+  ],
+  trade: [
+    ...Array(18).fill(PROGRESS_CARDS.COMMERCIAL_MONOPOLY)
+  ]
+};
 
 /** Player colors: Red, Blue, Orange, Teal, Green, Purple, Coral, Steel Blue (supports up to 8 players) */
 export const PLAYER_COLORS = ['#e63946', '#457b9d', '#f4a261', '#2a9d8f', '#6a994e', '#9d4edd', '#e07b53', '#4a90d9'];
@@ -787,7 +822,7 @@ export function getAdjacentVertices(vKey, hexes) {
  * @param enableSpecialBuild - Whether to enable special building phase (5-8 player rule)
  * @returns Complete game state object
  */
-export function createGame(gameId, hostPlayer, isExtended = false, enableSpecialBuild = true, mapType = 'random', autoSetup = false) {
+export function createGame(gameId, hostPlayer, isExtended = false, enableSpecialBuild = true, mapType = 'random', autoSetup = false, isCitiesAndKnights = false) {
   // Select board configuration based on game mode
   const HEX_POSITIONS = isExtended ? HEX_POSITIONS_LARGE : HEX_POSITIONS_STANDARD;
   const TERRAIN_DISTRIBUTION = isExtended ? TERRAIN_DISTRIBUTION_LARGE : TERRAIN_DISTRIBUTION_STANDARD;
@@ -872,6 +907,8 @@ export function createGame(gameId, hostPlayer, isExtended = false, enableSpecial
     enableSpecialBuild, // Whether special building phase is enabled (optional rule)
     specialBuildingPhase: false, // True during special building phase
     specialBuildIndex: 0, // Which player is currently in special build phase
+    isCitiesAndKnights, // Cities & Knights mode enabled
+    barbarianPosition: isCitiesAndKnights ? 0 : null, // 0 to 7
     ports, // Port locations and types
     players: [{
       id: hostPlayer.id,
@@ -879,8 +916,17 @@ export function createGame(gameId, hostPlayer, isExtended = false, enableSpecial
       color: PLAYER_COLORS[0],
       turnOrder: null, // Will be set when game starts
       resources: { brick: 0, lumber: 0, wool: 0, grain: 0, ore: 0 },
+      commodities: { paper: 0, coin: 0, cloth: 0 },
+      cityImprovements: { science: 0, politics: 0, trade: 0 },
+      cKKnights: {
+        inactive: { basic: 0, strong: 0, mighty: 0 },
+        active: { basic: 0, strong: 0, mighty: 0 },
+        hasMovedThisTurn: { basic: 0, strong: 0, mighty: 0 } // knights activated this turn can't be used
+      },
       developmentCards: [],
+      progressCards: { science: [], politics: [], trade: [] },
       newDevCards: [], // Cards bought this turn (can't be played)
+      newProgressCards: { science: [], politics: [], trade: [] }, // Cards acquired this turn
       knightsPlayed: 0,
       victoryPoints: 0,
       hiddenVictoryPoints: 0, // VP from dev cards (secret until win)
@@ -896,6 +942,11 @@ export function createGame(gameId, hostPlayer, isExtended = false, enableSpecial
     edges,
     robber: desertHex,
     devCardDeck: shuffle(devCards),
+    progressCardDecks: isCitiesAndKnights ? {
+      science: shuffle([...PROGRESS_CARD_DISTRIBUTION.science]),
+      politics: shuffle([...PROGRESS_CARD_DISTRIBUTION.politics]),
+      trade: shuffle([...PROGRESS_CARD_DISTRIBUTION.trade])
+    } : null,
     longestRoadPlayer: null,
     longestRoadLength: 4, // Must have at least 5 to claim
     largestArmyPlayer: null,
@@ -928,8 +979,17 @@ export function addPlayer(game, player) {
     color: PLAYER_COLORS[game.players.length],
     turnOrder: null, // Will be set when game starts
     resources: { brick: 0, lumber: 0, wool: 0, grain: 0, ore: 0 },
+    commodities: { paper: 0, coin: 0, cloth: 0 },
+    cityImprovements: { science: 0, politics: 0, trade: 0 },
+    cKKnights: {
+      inactive: { basic: 0, strong: 0, mighty: 0 },
+      active: { basic: 0, strong: 0, mighty: 0 },
+      hasMovedThisTurn: { basic: 0, strong: 0, mighty: 0 }
+    },
     developmentCards: [],
+    progressCards: { science: [], politics: [], trade: [] },
     newDevCards: [],
+    newProgressCards: { science: [], politics: [], trade: [] },
     knightsPlayed: 0,
     victoryPoints: 0,
     hiddenVictoryPoints: 0, // VP from dev cards (secret until win)
@@ -1042,12 +1102,55 @@ export function rollDice(game, playerId) {
     return { success: false, error: 'Cannot roll now' };
   }
   
-  const die1 = Math.floor(Math.random() * 6) + 1;
-  const die2 = Math.floor(Math.random() * 6) + 1;
+  const die1 = Math.floor(Math.random() * 6) + 1; // White die
+  const die2 = Math.floor(Math.random() * 6) + 1; // Red die
   const total = die1 + die2;
   
-  game.diceRoll = { die1, die2, total };
+  // Event die: 1-3 = barbarian, 4 = science, 5 = politics, 6 = trade
+  let eventDie = null;
+  let barbarianResult = null;
+  if (game.isCitiesAndKnights) {
+    const eventRoll = Math.floor(Math.random() * 6) + 1;
+    if (eventRoll <= 3) {
+      eventDie = 'barbarian';
+      game.barbarianPosition += 1;
+      if (game.barbarianPosition >= 7) {
+        barbarianResult = resolveBarbarianAttack(game);
+      }
+    }
+    else if (eventRoll === 4) eventDie = 'science';
+    else if (eventRoll === 5) eventDie = 'politics';
+    else eventDie = 'trade';
+  }
+  
+  game.diceRoll = { die1, die2, total, eventDie };
   game.hasRolledThisTurn = true;
+  if (barbarianResult) {
+    game.lastBarbarianResult = barbarianResult;
+  } else {
+    game.lastBarbarianResult = null; // Clear previous result
+  }
+  
+  // Progress Card distribution
+  let drawnProgressCards = [];
+  if (game.isCitiesAndKnights && eventDie && eventDie !== 'barbarian') {
+    game.players.forEach(p => {
+      const level = p.cityImprovements[eventDie];
+      if (die2 <= level) {
+        const deck = game.progressCardDecks[eventDie];
+        if (deck && deck.length > 0) {
+          const card = deck.pop();
+          if (card === PROGRESS_CARDS.CONSTITUTION) {
+            p.hiddenVictoryPoints = (p.hiddenVictoryPoints || 0) + 1;
+            checkWinner(game);
+          }
+          p.newProgressCards[eventDie].push(card);
+          drawnProgressCards.push({ playerId: p.id, card, track: eventDie });
+        }
+      }
+    });
+  }
+  game.lastDrawnProgressCards = drawnProgressCards.length > 0 ? drawnProgressCards : null;
   
   if (total === 7) {
     // Check if any player has more than 7 cards
@@ -1094,6 +1197,9 @@ function distributeResources(game, roll) {
   const gains = {};
   game.players.forEach((_, idx) => {
     gains[idx] = { brick: 0, lumber: 0, wool: 0, grain: 0, ore: 0 };
+    if (game.isCitiesAndKnights) {
+      gains[idx].commodities = { paper: 0, coin: 0, cloth: 0 };
+    }
   });
   
   // Track which (hex, physical_vertex) combinations have already been processed
@@ -1116,9 +1222,32 @@ function distributeResources(game, roll) {
           processedHexVertices.add(hexVertexKey);
           
           const player = game.players[buildingInfo.owner];
-          const amount = buildingInfo.type === 'city' ? 2 : 1;
-          player.resources[hex.resource] += amount;
-          gains[buildingInfo.owner][hex.resource] += amount;
+          
+          if (game.isCitiesAndKnights && buildingInfo.type === 'city') {
+            // Cities & Knights: Cities produce 1 Resource + 1 Commodity (if applicable)
+            player.resources[hex.resource] += 1;
+            gains[buildingInfo.owner][hex.resource] += 1;
+            
+            if (hex.resource === RESOURCES.LUMBER) {
+              player.commodities.paper += 1;
+              gains[buildingInfo.owner].commodities.paper += 1;
+            } else if (hex.resource === RESOURCES.WOOL) {
+              player.commodities.cloth += 1;
+              gains[buildingInfo.owner].commodities.cloth += 1;
+            } else if (hex.resource === RESOURCES.ORE) {
+              player.commodities.coin += 1;
+              gains[buildingInfo.owner].commodities.coin += 1;
+            } else {
+              // Brick and Grain still produce 2 resources
+              player.resources[hex.resource] += 1;
+              gains[buildingInfo.owner][hex.resource] += 1;
+            }
+          } else {
+            // Standard game or standard settlement
+            const amount = buildingInfo.type === 'city' ? 2 : 1;
+            player.resources[hex.resource] += amount;
+            gains[buildingInfo.owner][hex.resource] += amount;
+          }
         }
       }
     }
@@ -1543,6 +1672,240 @@ export function upgradeToCity(game, playerId, vKey) {
 // DEVELOPMENT CARDS
 // ============================================================================
 
+/**
+ * Buy a city improvement (Cities & Knights)
+ * Costs 1, 2, 3, 4, 5 of the corresponding commodity.
+ */
+export function buyCityImprovement(game, playerId, track) {
+  if (!game.isCitiesAndKnights) return { success: false, error: 'Not playing Cities & Knights' };
+  
+  const playerIndex = game.players.findIndex(p => p.id === playerId);
+  if (playerIndex === -1) return { success: false, error: 'Player not found' };
+  
+  if (!canPlayerBuildNow(game, playerId)) return { success: false, error: 'Cannot buy now' };
+  
+  const player = game.players[playerIndex];
+  const currentLevel = player.cityImprovements[track];
+  
+  if (currentLevel >= 5) return { success: false, error: 'Maximum level reached' };
+  
+  const cost = currentLevel + 1;
+  const commodity = track === 'science' ? 'paper' : track === 'politics' ? 'coin' : 'cloth';
+  
+  if (player.commodities[commodity] < cost) {
+    return { success: false, error: `Not enough ${commodity} (need ${cost})` };
+  }
+  
+  // Need at least one city built to buy improvements (start with 4 cities available)
+  if (player.cities >= 4) {
+    return { success: false, error: 'You must build a city first' };
+  }
+  
+  player.commodities[commodity] -= cost;
+  player.cityImprovements[track] += 1;
+  
+  return { success: true };
+}
+
+/**
+ * Recruit a new basic knight (C&K)
+ * Costs 1 Ore + 1 Wool
+ */
+export function recruitKnight(game, playerId) {
+  if (!game.isCitiesAndKnights) return { success: false, error: 'Not playing Cities & Knights' };
+  
+  const playerIndex = game.players.findIndex(p => p.id === playerId);
+  if (playerIndex === -1) return { success: false, error: 'Player not found' };
+  
+  if (!canPlayerBuildNow(game, playerId)) return { success: false, error: 'Cannot build now' };
+  
+  const player = game.players[playerIndex];
+  
+  if (!hasResources(player, BUILDING_COSTS.knight)) {
+    return { success: false, error: 'Not enough resources (need 1 Ore, 1 Wool)' };
+  }
+  
+  const totalBasicKnights = player.cKKnights.inactive.basic + player.cKKnights.active.basic;
+  if (totalBasicKnights >= 2) return { success: false, error: 'Maximum of 2 basic knights allowed' };
+  
+  deductResources(player, BUILDING_COSTS.knight);
+  player.cKKnights.inactive.basic += 1;
+  player.cKKnights.hasMovedThisTurn.basic += 1;
+  
+  return { success: true };
+}
+
+/**
+ * Activate a knight (C&K)
+ * Costs 1 Grain
+ */
+export function activateKnight(game, playerId, level) {
+  if (!game.isCitiesAndKnights) return { success: false, error: 'Not playing Cities & Knights' };
+  
+  const playerIndex = game.players.findIndex(p => p.id === playerId);
+  if (playerIndex === -1) return { success: false, error: 'Player not found' };
+  
+  if (!canPlayerBuildNow(game, playerId)) return { success: false, error: 'Cannot build now' };
+  
+  const player = game.players[playerIndex];
+  
+  if (!hasResources(player, BUILDING_COSTS.activateKnight)) {
+    return { success: false, error: 'Not enough grain' };
+  }
+  
+  if (player.cKKnights.inactive[level] <= 0) {
+    return { success: false, error: `No inactive ${level} knight to activate` };
+  }
+  
+  deductResources(player, BUILDING_COSTS.activateKnight);
+  player.cKKnights.inactive[level] -= 1;
+  player.cKKnights.active[level] += 1;
+  
+  return { success: true };
+}
+
+/**
+ * Upgrade a knight (C&K)
+ * Costs 1 Ore + 1 Wool
+ */
+export function upgradeKnight(game, playerId, fromLevel) {
+  if (!game.isCitiesAndKnights) return { success: false, error: 'Not playing Cities & Knights' };
+  
+  const playerIndex = game.players.findIndex(p => p.id === playerId);
+  if (playerIndex === -1) return { success: false, error: 'Player not found' };
+  
+  if (!canPlayerBuildNow(game, playerId)) return { success: false, error: 'Cannot build now' };
+  
+  const player = game.players[playerIndex];
+  const toLevel = fromLevel === 'basic' ? 'strong' : fromLevel === 'strong' ? 'mighty' : null;
+  
+  if (!toLevel) return { success: false, error: 'Cannot upgrade mighty knight further' };
+  
+  const hasInactive = player.cKKnights.inactive[fromLevel] > 0;
+  const hasActive = player.cKKnights.active[fromLevel] > 0;
+  
+  if (!hasInactive && !hasActive) return { success: false, error: `No ${fromLevel} knight to upgrade` };
+  
+  const totalTargetLevel = player.cKKnights.inactive[toLevel] + player.cKKnights.active[toLevel];
+  if (totalTargetLevel >= 2) return { success: false, error: `Maximum of 2 ${toLevel} knights allowed` };
+  
+  if (toLevel === 'mighty' && player.cityImprovements.politics < 3) {
+    return { success: false, error: 'Fortress (Politics level 3) required to build Mighty Knights' };
+  }
+  
+  if (!hasResources(player, BUILDING_COSTS.knight)) {
+    return { success: false, error: 'Not enough resources (need 1 Ore, 1 Wool)' };
+  }
+  
+  deductResources(player, BUILDING_COSTS.knight);
+  
+  if (hasInactive) {
+    player.cKKnights.inactive[fromLevel] -= 1;
+  } else {
+    player.cKKnights.active[fromLevel] -= 1;
+  }
+  
+  player.cKKnights.inactive[toLevel] += 1;
+  player.cKKnights.hasMovedThisTurn[toLevel] += 1;
+  
+  return { success: true };
+}
+
+/**
+ * Resolve the Barbarian Attack
+ */
+export function resolveBarbarianAttack(game) {
+  let barbarianStrength = 0;
+  game.players.forEach(p => {
+    barbarianStrength += (4 - p.cities);
+  });
+  
+  let catanStrength = 0;
+  const playerStrengths = {};
+  game.players.forEach(p => {
+    const pStrength = (p.cKKnights.active.basic * 1) + (p.cKKnights.active.strong * 2) + (p.cKKnights.active.mighty * 3);
+    catanStrength += pStrength;
+    playerStrengths[p.id] = pStrength;
+  });
+  
+  let result = { 
+    barbarianStrength, 
+    catanStrength, 
+    won: catanStrength >= barbarianStrength,
+    details: ''
+  };
+  
+  if (catanStrength >= barbarianStrength) {
+    let highestStrength = -1;
+    let highestPlayers = [];
+    Object.entries(playerStrengths).forEach(([pid, strength]) => {
+      if (strength > highestStrength) {
+        highestStrength = strength;
+        highestPlayers = [pid];
+      } else if (strength === highestStrength) {
+        highestPlayers.push(pid);
+      }
+    });
+    
+    if (highestStrength > 0) {
+      highestPlayers.forEach(pid => {
+        const player = game.players.find(p => p.id === pid);
+        player.victoryPoints += 1; 
+      });
+      result.details = `Catan won! Defender of Catan VP awarded to: ${highestPlayers.map(pid => game.players.find(p=>p.id===pid).name).join(', ')}`;
+    } else {
+      result.details = 'Catan won! (But no knights were present)';
+    }
+  } else {
+    let lowestStrength = Infinity;
+    let lowestPlayers = [];
+    
+    game.players.forEach(p => {
+      const builtCities = 4 - p.cities;
+      if (builtCities > 0) { 
+        const strength = playerStrengths[p.id];
+        if (strength < lowestStrength) {
+          lowestStrength = strength;
+          lowestPlayers = [p.id];
+        } else if (strength === lowestStrength) {
+          lowestPlayers.push(p.id);
+        }
+      }
+    });
+    
+    lowestPlayers.forEach(pid => {
+      const player = game.players.find(p => p.id === pid);
+      const cityVertexKey = Object.entries(game.vertices).find(([vKey, v]) => v.owner === game.players.findIndex(p2 => p2.id === pid) && v.building === 'city')?.[0];
+      
+      if (cityVertexKey) {
+        game.vertices[cityVertexKey].building = 'settlement';
+        player.cities += 1;
+        player.settlements -= 1;
+        player.victoryPoints -= 1;
+      }
+    });
+    
+    if (lowestPlayers.length > 0) {
+      result.details = `Barbarians won! Cities downgraded to settlements for: ${lowestPlayers.map(pid => game.players.find(p=>p.id===pid).name).join(', ')}`;
+    } else {
+      result.details = `Barbarians won, but no players had cities to pillage!`;
+    }
+  }
+  
+  game.barbarianPosition = 0;
+  game.players.forEach(p => {
+    p.cKKnights.inactive.basic += p.cKKnights.active.basic;
+    p.cKKnights.inactive.strong += p.cKKnights.active.strong;
+    p.cKKnights.inactive.mighty += p.cKKnights.active.mighty;
+    
+    p.cKKnights.active.basic = 0;
+    p.cKKnights.active.strong = 0;
+    p.cKKnights.active.mighty = 0;
+  });
+  
+  return result;
+}
+
 /** 
  * Buy a development card (costs 1 ore + 1 grain + 1 wool)
  * Card is added to newDevCards - can't be played until next turn
@@ -1650,6 +2013,64 @@ export function playDevCard(game, playerId, cardType, params = {}) {
   
   // Mark that a dev card was played this turn
   game.devCardPlayedThisTurn = true;
+  
+  return { success: true };
+}
+
+/** 
+ * Play a progress card (C&K)
+ */
+export function playProgressCard(game, playerId, track, cardType, params = {}) {
+  const playerIndex = game.players.findIndex(p => p.id === playerId);
+  if (playerIndex === -1) return { success: false, error: 'Player not found' };
+  
+  if (game.currentPlayerIndex !== playerIndex) {
+    return { success: false, error: 'Not your turn' };
+  }
+  
+  if (game.turnPhase !== 'main') {
+    return { success: false, error: 'Cannot play progress cards now' };
+  }
+  
+  const player = game.players[playerIndex];
+  
+  // Verify player has the card
+  const cardIndex = player.progressCards[track].indexOf(cardType);
+  if (cardIndex === -1) {
+    return { success: false, error: 'You do not have this progress card' };
+  }
+  
+  // Apply card effects
+  switch (cardType) {
+    case PROGRESS_CARDS.INVENTOR: // Year of Plenty style
+      game.yearOfPlentyPicks = 2;
+      break;
+      
+    case PROGRESS_CARDS.ENGINEER: // Road Building style
+      game.freeRoads = 2;
+      break;
+      
+    case PROGRESS_CARDS.COMMERCIAL_MONOPOLY: // Monopoly style
+      if (!params.resource) {
+        return { success: false, error: 'Resource must be specified' };
+      }
+      
+      let totalStolen = 0;
+      game.players.forEach((p, idx) => {
+        if (idx !== playerIndex && p.resources[params.resource] > 0) {
+          totalStolen += p.resources[params.resource];
+          p.resources[params.resource] = 0;
+        }
+      });
+      player.resources[params.resource] += totalStolen;
+      break;
+      
+    case PROGRESS_CARDS.CONSTITUTION:
+      return { success: false, error: 'Constitution cards cannot be played' };
+  }
+  
+  // Remove the card from hand
+  player.progressCards[track].splice(cardIndex, 1);
   
   return { success: true };
 }
@@ -1940,10 +2361,22 @@ export function endTurn(game, playerId) {
     return { success: false, error: 'Cannot end turn now' };
   }
   
-  // Move new dev cards to regular cards
+  // Move new dev cards to playable dev cards
   const player = game.players[playerIndex];
-  player.developmentCards.push(...player.newDevCards);
+  player.developmentCards = player.developmentCards.concat(player.newDevCards);
   player.newDevCards = [];
+  
+  if (game.isCitiesAndKnights) {
+    player.progressCards.science = player.progressCards.science.concat(player.newProgressCards.science);
+    player.progressCards.politics = player.progressCards.politics.concat(player.newProgressCards.politics);
+    player.progressCards.trade = player.progressCards.trade.concat(player.newProgressCards.trade);
+    
+    player.newProgressCards.science = [];
+    player.newProgressCards.politics = [];
+    player.newProgressCards.trade = [];
+    
+    player.cKKnights.hasMovedThisTurn = { basic: 0, strong: 0, mighty: 0 };
+  }
   
   // Cancel any pending trade and reset turn-based flags
   game.tradeOffer = null;

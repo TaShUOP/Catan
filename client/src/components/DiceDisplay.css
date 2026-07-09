@@ -31,6 +31,19 @@
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   transform-style: preserve-3d;
   display: inline-block;
+  line-height: 1;
+}
+
+.die-red {
+  color: var(--player-red);
+}
+
+.die-event {
+  font-size: 2rem; /* Emojis look slightly larger */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 0.2rem;
 }
 
 .dice-display.animating .die {

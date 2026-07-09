@@ -168,10 +168,10 @@ function App() {
   // ============================================================================
   
   /** Create a new game room as the host */
-  const handleCreateGame = useCallback((playerName, isExtended = false, enableSpecialBuild = true, mapType = 'random', autoSetup = false) => {
+  const handleCreateGame = useCallback((playerName, isExtended = false, enableSpecialBuild = true, mapType = 'random', autoSetup = false, isCitiesAndKnights = false) => {
     if (!socket) return;
     
-    socket.emit('createGame', { playerName, isExtended, enableSpecialBuild, mapType, autoSetup }, (response) => {
+    socket.emit('createGame', { playerName, isExtended, enableSpecialBuild, mapType, autoSetup, isCitiesAndKnights }, (response) => {
       if (response.success) {
         setGameCode(response.gameCode);
         setPlayerId(response.playerId);

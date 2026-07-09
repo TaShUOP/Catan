@@ -13,6 +13,7 @@ function Lobby({ onCreateGame, onJoinGame, error, setError, serverUrl, setServer
   const [enableSpecialBuild, setEnableSpecialBuild] = useState(true);
   const [mapType, setMapType] = useState('random');
   const [autoSetup, setAutoSetup] = useState(false);
+  const [isCitiesAndKnights, setIsCitiesAndKnights] = useState(false);
 
   const handleSaveSettings = () => {
     localStorage.setItem('catanServerUrl', tempUrl);
@@ -29,7 +30,7 @@ function Lobby({ onCreateGame, onJoinGame, error, setError, serverUrl, setServer
     }
     
     if (mode === 'create') {
-      onCreateGame(playerName.trim(), isExtended, enableSpecialBuild, mapType, autoSetup);
+      onCreateGame(playerName.trim(), isExtended, enableSpecialBuild, mapType, autoSetup, isCitiesAndKnights);
     } else if (mode === 'join') {
       if (!gameCode.trim()) {
         setError('Please enter a game code');
@@ -213,6 +214,21 @@ function Lobby({ onCreateGame, onJoinGame, error, setError, serverUrl, setServer
                     <span className="checkbox-text">
                       <span className="checkbox-title">⚡ Quick Start (Auto-Setup)</span>
                       <span className="checkbox-desc">Automatically place initial settlements</span>
+                    </span>
+                  </label>
+                </div>
+
+                {/* Cities & Knights Game Mode */}
+                <div className="form-group special-build-option" style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1rem' }}>
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={isCitiesAndKnights}
+                      onChange={(e) => setIsCitiesAndKnights(e.target.checked)}
+                    />
+                    <span className="checkbox-text">
+                      <span className="checkbox-title">🏰 Cities & Knights Expansion</span>
+                      <span className="checkbox-desc">Play with Commodities, Knights, and Barbarians</span>
                     </span>
                   </label>
                 </div>

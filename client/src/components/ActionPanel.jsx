@@ -31,7 +31,12 @@ function ActionPanel({
   yearOfPlentyPicks,
   devCardsLeft,
   isSpecialBuildPhase = false,
-  isMySpecialBuild = false
+  isMySpecialBuild = false,
+  isCitiesAndKnights = false,
+  onBuyCityImprovement,
+  onRecruitKnight,
+  onActivateKnight,
+  onUpgradeKnight
 }) {
   const canRoll = isMyTurn && turnPhase === 'roll';
   
@@ -47,6 +52,11 @@ function ActionPanel({
   const canAffordSettlement = hasResources(player, BUILDING_COSTS.settlement);
   const canAffordCity = hasResources(player, BUILDING_COSTS.city);
   const canAffordDevCard = hasResources(player, BUILDING_COSTS.developmentCard);
+
+  const canAffordScience = player.commodities?.paper >= (player.cityImprovements?.science + 1);
+  const canAffordPolitics = player.commodities?.coin >= (player.cityImprovements?.politics + 1);
+  const canAffordTrade = player.commodities?.cloth >= (player.cityImprovements?.trade + 1);
+  const hasCityBuilt = player.cities < 4; // cities start at 4, so <4 means at least 1 is built
 
   const hasDevCards = (player.developmentCards?.length || 0) > 0;
 
@@ -126,16 +136,91 @@ function ActionPanel({
           <span className="cost">⛏️3 🌾2</span>
         </button>
 
-        <button
-          className="action-btn build-btn dev-card-btn"
-          onClick={onBuyDevCard}
-          disabled={!canBuild || !canAffordDevCard || devCardsLeft === 0}
-        >
-          <span className="btn-icon">📜</span>
-          <span className="btn-label">Dev Card</span>
-          <span className="cost">⛏️1 🌾1 🐑1</span>
-          {devCardsLeft <= 5 && <span className="remaining">({devCardsLeft} left)</span>}
-        </button>
+        {!isCitiesAndKnights ? (
+          <button
+            className="action-btn build-btn dev-card-btn"
+            onClick={onBuyDevCard}
+            disabled={!canBuild || !canAffordDevCard || devCardsLeft === 0}
+          >
+            <span className="btn-icon">📜</span>
+            <span className="btn-label">Dev Card</span>
+            <span className="cost">⛏️1 🌾1 🐑1</span>
+            {devCardsLeft <= 5 && <span className="remaining">({devCardsLeft} left)</span>}
+          </button>
+        ) : (
+          <div className="city-improvements">
+            <h4 style={{ margin: '10px 0 5px 0', fontSize: '0.9rem', color: '#b0b0b0' }}>City Improvements</h4>
+            <button
+              className="action-btn build-btn"
+              onClick={() => onBuyCityImprovement('science')}
+              disabled={!canBuild || !canAffordScience || !hasCityBuilt || player.cityImprovements?.science >= 5}
+            >
+              <span className="btn-icon">📗</span>
+              <span className="btn-label">Science</span>
+              <span className="cost">📖{player.cityImprovements?.science >= 5 ? '-' : player.cityImprovements?.science + 1}</span>
+            </button>
+            <button
+              className="action-btn build-btn"
+              onClick={() => onBuyCityImprovement('politics')}
+              disabled={!canBuild || !canAffordPolitics || !hasCityBuilt || player.cityImprovements?.politics >= 5}
+            >
+              <span className="btn-icon">📘</span>
+              <span className="btn-label">Politics</span>
+              <span className="cost">🪙{player.cityImprovements?.politics >= 5 ? '-' : player.cityImprovements?.politics + 1}</span>
+            </button>
+            <button
+              className="action-btn build-btn"
+              onClick={() => onBuyCityImprovement('trade')}
+              disabled={!canBuild || !canAffordTrade || !hasCityBuilt || player.cityImprovements?.trade >= 5}
+            >
+              <span className="btn-icon">📒</span>
+              <span className="btn-label">Trade</span>
+              <span className="cost">🧵{player.cityImprovements?.trade >= 5 ? '-' : player.cityImprovements?.trade + 1}</span>
+            </button>
+            
+            <div className="knights-section" style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <h4 style={{ margin: '0 0 5px 0', fontSize: '0.9rem', color: '#b0b0b0' }}>Knights</h4>
+              
+              <button
+                className="action-btn build-btn"
+                onClick={onRecruitKnight}
+                disabled={!canBuild || !hasResources(player, {ore: 1, wool: 1}) || (player.cKKnights?.inactive.basic + player.cKKnights?.active.basic) >= 2}
+              >
+                <span className="btn-icon">🛡️</span>
+                <span className="btn-label">Recruit Knight</span>
+                <span className="cost">⛏️1 🐑1</span>
+              </button>
+              
+              <button
+                className="action-btn build-btn"
+                onClick={() => {
+                  const level = player.cKKnights?.inactive.mighty > 0 ? 'mighty' : player.cKKnights?.inactive.strong > 0 ? 'strong' : 'basic';
+                  onActivateKnight(level);
+                }}
+                disabled={!canBuild || !hasResources(player, {grain: 1}) || (player.cKKnights?.inactive.basic + player.cKKnights?.inactive.strong + player.cKKnights?.inactive.mighty) === 0}
+              >
+                <span className="btn-icon">⚡</span>
+                <span className="btn-label">Activate Knight</span>
+                <span className="cost">🌾1</span>
+              </button>
+              
+              <button
+                className="action-btn build-btn"
+                onClick={() => {
+                  const canBuildMighty = player.cityImprovements?.politics >= 3;
+                  const hasStrong = player.cKKnights?.inactive.strong > 0 || player.cKKnights?.active.strong > 0;
+                  const level = (hasStrong && canBuildMighty && (player.cKKnights?.inactive.mighty + player.cKKnights?.active.mighty) < 2) ? 'strong' : 'basic';
+                  onUpgradeKnight(level);
+                }}
+                disabled={!canBuild || !hasResources(player, {ore: 1, wool: 1}) || (player.cKKnights?.inactive.basic + player.cKKnights?.active.basic + player.cKKnights?.inactive.strong + player.cKKnights?.active.strong) === 0}
+              >
+                <span className="btn-icon">⚔️</span>
+                <span className="btn-label">Upgrade Knight</span>
+                <span className="cost">⛏️1 🐑1</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Trade Section */}

@@ -1,13 +1,26 @@
 import './PlayerPanel.css';
 
 function PlayerPanel({ player, isCurrentTurn, isMe, longestRoad, largestArmy, onRightClick, gameOver = false }) {
-  const totalCards = typeof player.resources === 'number' 
+  let totalCards = typeof player.resources === 'number' 
     ? player.resources 
     : Object.values(player.resources).reduce((a, b) => a + b, 0);
+    
+  if (player.commodities) {
+    if (typeof player.commodities === 'number') {
+      totalCards += player.commodities;
+    } else {
+      totalCards += Object.values(player.commodities).reduce((a, b) => a + b, 0);
+    }
+  }
   
   const devCardCount = typeof player.developmentCards === 'number'
     ? player.developmentCards
     : player.developmentCards?.length || 0;
+    
+  const scienceCards = player.progressCards?.science?.length || 0;
+  const politicsCards = player.progressCards?.politics?.length || 0;
+  const tradeCards = player.progressCards?.trade?.length || 0;
+  const isCitiesAndKnights = !!player.progressCards;
 
   const hiddenVP = player.hiddenVictoryPoints || 0;
 
@@ -78,14 +91,33 @@ function PlayerPanel({ player, isCurrentTurn, isMe, longestRoad, largestArmy, on
           <span className="stat-icon">🃏</span>
           <span className="stat-value">{totalCards}</span>
         </div>
-        <div 
-          className="stat has-info"
-          onContextMenu={(e) => handleRightClick(e, 'devCards')}
-          title="Right-click for info"
-        >
-          <span className="stat-icon">📜</span>
-          <span className="stat-value">{devCardCount}</span>
-        </div>
+        
+        {isCitiesAndKnights ? (
+          <>
+            <div className="stat has-info" title="Science Progress Cards">
+              <span className="stat-icon" style={{color: '#4caf50'}}>📗</span>
+              <span className="stat-value">{scienceCards}</span>
+            </div>
+            <div className="stat has-info" title="Politics Progress Cards">
+              <span className="stat-icon" style={{color: '#2196f3'}}>📘</span>
+              <span className="stat-value">{politicsCards}</span>
+            </div>
+            <div className="stat has-info" title="Trade Progress Cards">
+              <span className="stat-icon" style={{color: '#ffeb3b'}}>📒</span>
+              <span className="stat-value">{tradeCards}</span>
+            </div>
+          </>
+        ) : (
+          <div 
+            className="stat has-info"
+            onContextMenu={(e) => handleRightClick(e, 'devCards')}
+            title="Right-click for info"
+          >
+            <span className="stat-icon">📜</span>
+            <span className="stat-value">{devCardCount}</span>
+          </div>
+        )}
+        
         <div 
           className="stat has-info"
           onContextMenu={(e) => handleRightClick(e, 'knights')}
@@ -95,6 +127,14 @@ function PlayerPanel({ player, isCurrentTurn, isMe, longestRoad, largestArmy, on
           <span className="stat-value">{player.knightsPlayed}</span>
         </div>
       </div>
+      
+      {player.cityImprovements && (
+        <div className="player-city-improvements">
+          <div className="improvement-stat science" title="Science (Paper)"><span className="icon">📗</span> {player.cityImprovements.science}/5</div>
+          <div className="improvement-stat politics" title="Politics (Coin)"><span className="icon">📘</span> {player.cityImprovements.politics}/5</div>
+          <div className="improvement-stat trade" title="Trade (Cloth)"><span className="icon">📒</span> {player.cityImprovements.trade}/5</div>
+        </div>
+      )}
       
       <div className="player-pieces">
         <div 
@@ -128,6 +168,20 @@ function PlayerPanel({ player, isCurrentTurn, isMe, longestRoad, largestArmy, on
         <span className="road-length-label">Road:</span>
         <span className="road-length-value">{player.roadLength || 0}</span>
       </div>
+      
+      {player.cKKnights && (
+        <div className="player-knights" style={{ padding: '2px 8px', fontSize: '0.75rem', color: '#b0b0b0', display: 'flex', gap: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+          {(player.cKKnights.inactive.basic > 0 || player.cKKnights.active.basic > 0) && (
+             <span title="Basic Knights">🛡️ {player.cKKnights.inactive.basic + player.cKKnights.active.basic} ({player.cKKnights.active.basic}⚡)</span>
+          )}
+          {(player.cKKnights.inactive.strong > 0 || player.cKKnights.active.strong > 0) && (
+             <span title="Strong Knights">⚔️ {player.cKKnights.inactive.strong + player.cKKnights.active.strong} ({player.cKKnights.active.strong}⚡)</span>
+          )}
+          {(player.cKKnights.inactive.mighty > 0 || player.cKKnights.active.mighty > 0) && (
+             <span title="Mighty Knights">👑 {player.cKKnights.inactive.mighty + player.cKKnights.active.mighty} ({player.cKKnights.active.mighty}⚡)</span>
+          )}
+        </div>
+      )}
       
       <div className="player-achievements">
         {longestRoad && (

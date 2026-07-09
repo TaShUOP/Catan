@@ -26,6 +26,7 @@ const AVAILABLE_COLORS = [
 
 function GameBoard({ socket, gameState, playerId, gameCode, chatMessages, onLeaveGame, addNotification }) {
   const [selectedAction, setSelectedAction] = useState(null); // 'settlement', 'road', 'city'
+  const [dismissedBarbarianResult, setDismissedBarbarianResult] = useState(false);
   const [lastPlacedSettlement, setLastPlacedSettlement] = useState(null);
   const [showTradeModal, setShowTradeModal] = useState(false);
   const [showDevCardModal, setShowDevCardModal] = useState(false);
@@ -64,6 +65,7 @@ function GameBoard({ socket, gameState, playerId, gameCode, chatMessages, onLeav
     if (gameState.diceRoll && gameState.turnPhase !== 'roll') {
       // Show the dice
       setShowDice(true);
+      setDismissedBarbarianResult(false);
       
       // Hide dice after 5 seconds
       const timer = setTimeout(() => {
@@ -138,6 +140,17 @@ function GameBoard({ socket, gameState, playerId, gameCode, chatMessages, onLeav
     socket.on('stealResult', handleStealResult);
     return () => socket.off('stealResult', handleStealResult);
   }, [socket, addNotification]);
+
+  // Notify when a progress card is drawn from dice roll
+  useEffect(() => {
+    if (gameState?.lastDrawnProgressCards) {
+      const myCard = gameState.lastDrawnProgressCards.find(c => c.playerId === playerId);
+      if (myCard) {
+        const icon = myCard.track === 'science' ? '📗' : myCard.track === 'politics' ? '📘' : '📒';
+        addNotification(`${icon} You drew a ${myCard.track} progress card!`);
+      }
+    }
+  }, [gameState?.diceRoll]);
 
   // Listen for special building phase events (5-8 player extension)
   useEffect(() => {
@@ -378,6 +391,34 @@ function GameBoard({ socket, gameState, playerId, gameCode, chatMessages, onLeav
     });
   }, [socket, addNotification]);
 
+  const handleBuyCityImprovement = useCallback((track) => {
+    socket.emit('buyCityImprovement', { track }, (response) => {
+      if (response.success) {
+        addNotification(`Upgraded ${track} improvement!`);
+      } else {
+        addNotification(response.error);
+      }
+    });
+  }, [socket, addNotification]);
+  
+  const handleRecruitKnight = useCallback(() => {
+    socket.emit('recruitKnight', (response) => {
+      if (!response.success) addNotification(response.error);
+    });
+  }, [socket, addNotification]);
+
+  const handleActivateKnight = useCallback((level) => {
+    socket.emit('activateKnight', { level }, (response) => {
+      if (!response.success) addNotification(response.error);
+    });
+  }, [socket, addNotification]);
+
+  const handleUpgradeKnight = useCallback((fromLevel) => {
+    socket.emit('upgradeKnight', { fromLevel }, (response) => {
+      if (!response.success) addNotification(response.error);
+    });
+  }, [socket, addNotification]);
+
   const handleStartGame = useCallback(() => {
     socket.emit('startGame', (response) => {
       if (!response.success) {
@@ -615,6 +656,11 @@ function GameBoard({ socket, gameState, playerId, gameCode, chatMessages, onLeav
                 onBuyDevCard={handleBuyDevCard}
                 onOpenTrade={() => setShowTradeModal(true)}
                 onOpenDevCards={() => setShowDevCardModal(true)}
+                onBuyCityImprovement={handleBuyCityImprovement}
+                onRecruitKnight={handleRecruitKnight}
+                onActivateKnight={handleActivateKnight}
+                onUpgradeKnight={handleUpgradeKnight}
+                isCitiesAndKnights={gameState.isCitiesAndKnights}
                 player={myPlayer}
                 freeRoads={gameState.freeRoads}
                 yearOfPlentyPicks={gameState.yearOfPlentyPicks}
@@ -685,6 +731,36 @@ function GameBoard({ socket, gameState, playerId, gameCode, chatMessages, onLeav
           </button>
         </div>
       )}
+      
+      {/* Barbarian Tracker Banner */}
+      {gameState.isCitiesAndKnights && (
+        <div className="barbarian-tracker-banner">
+          <span className="barbarian-icon">🏴‍☠️</span>
+          <span className="barbarian-text">
+            <strong>Barbarian Fleet:</strong> {gameState.barbarianPosition}/7 spaces until attack
+          </span>
+        </div>
+      )}
+      
+      {/* Barbarian Attack Result Modal */}
+      {gameState.lastBarbarianResult && !dismissedBarbarianResult && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ textAlign: 'center', zIndex: 1000, pointerEvents: 'auto' }}>
+            <h2 style={{ color: gameState.lastBarbarianResult.won ? '#4caf50' : '#f44336' }}>
+              {gameState.lastBarbarianResult.won ? '🛡️ Catan Defended!' : '🔥 Barbarians Pillaged!'}
+            </h2>
+            <p style={{ margin: '20px 0', fontSize: '1.2rem' }}>
+              Barbarian Strength: <strong>{gameState.lastBarbarianResult.barbarianStrength}</strong>
+              <br/>
+              Catan Knights Strength: <strong>{gameState.lastBarbarianResult.catanStrength}</strong>
+            </p>
+            <p style={{ marginBottom: '20px', color: '#ffd700' }}>
+              {gameState.lastBarbarianResult.details}
+            </p>
+            <button className="primary-btn" onClick={() => setDismissedBarbarianResult(true)}>Close</button>
+          </div>
+        </div>
+      )}
 
       {/* Trade Notification Banner - shows when there's a pending trade from another player */}
       {gameState.tradeOffer && 
@@ -729,6 +805,7 @@ function GameBoard({ socket, gameState, playerId, gameCode, chatMessages, onLeav
           isMyTurn={isMyTurn}
           turnPhase={gameState.turnPhase}
           yearOfPlentyPicks={gameState.yearOfPlentyPicks}
+          isCitiesAndKnights={gameState.isCitiesAndKnights}
           onClose={() => setShowDevCardModal(false)}
           addNotification={addNotification}
         />

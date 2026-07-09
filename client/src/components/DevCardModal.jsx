@@ -34,6 +34,13 @@ const DEV_CARD_INFO = {
   }
 };
 
+const PROGRESS_CARD_INFO = {
+  inventor: { name: 'Inventor (Science)', icon: '📗', description: 'Take any 2 resources from the bank.', playable: true, track: 'science' },
+  engineer: { name: 'Engineer (Science)', icon: '📗', description: 'Build 2 roads for free.', playable: true, track: 'science' },
+  constitution: { name: 'Constitution (Politics)', icon: '📘', description: '+1 Victory Point. Tracked automatically.', playable: false, track: 'politics' },
+  commercialMonopoly: { name: 'Commercial Monopoly (Trade)', icon: '📒', description: 'Name a resource. All players give you all their cards of that type.', playable: true, track: 'trade' }
+};
+
 const RESOURCES = ['brick', 'lumber', 'wool', 'grain', 'ore'];
 const RESOURCE_ICONS = {
   brick: '🧱',
@@ -43,23 +50,27 @@ const RESOURCE_ICONS = {
   ore: '⛏️'
 };
 
-function DevCardModal({ socket, myPlayer, isMyTurn, turnPhase, yearOfPlentyPicks, onClose, addNotification }) {
+function DevCardModal({ socket, myPlayer, isMyTurn, turnPhase, yearOfPlentyPicks, isCitiesAndKnights, onClose, addNotification }) {
   const [selectedCard, setSelectedCard] = useState(null);
   const [monopolyResource, setMonopolyResource] = useState(null);
 
   // Can play dev cards before rolling (roll phase) or after rolling (main phase)
   const canPlay = isMyTurn && (turnPhase === 'roll' || turnPhase === 'main');
 
-  const handlePlayCard = (cardType) => {
-    if (cardType === 'monopoly') {
-      setSelectedCard('monopoly');
+  const handlePlayCard = (cardType, track = null) => {
+    if (cardType === 'monopoly' || cardType === 'commercialMonopoly') {
+      setSelectedCard(cardType);
       return;
     }
 
-    socket.emit('playDevCard', { cardType, params: {} }, (response) => {
+    const eventName = isCitiesAndKnights ? 'playProgressCard' : 'playDevCard';
+    const payload = isCitiesAndKnights ? { track, cardType, params: {} } : { cardType, params: {} };
+    
+    socket.emit(eventName, payload, (response) => {
       if (response.success) {
-        addNotification(`Played ${DEV_CARD_INFO[cardType].name}!`);
-        if (cardType === 'knight' || cardType === 'roadBuilding') {
+        const info = isCitiesAndKnights ? PROGRESS_CARD_INFO[cardType] : DEV_CARD_INFO[cardType];
+        addNotification(`Played ${info.name}!`);
+        if (cardType === 'knight' || cardType === 'roadBuilding' || cardType === 'engineer') {
           onClose();
         }
       } else {
@@ -74,10 +85,12 @@ function DevCardModal({ socket, myPlayer, isMyTurn, turnPhase, yearOfPlentyPicks
       return;
     }
 
-    socket.emit('playDevCard', { 
-      cardType: 'monopoly', 
-      params: { resource: monopolyResource } 
-    }, (response) => {
+    const eventName = isCitiesAndKnights ? 'playProgressCard' : 'playDevCard';
+    const payload = isCitiesAndKnights 
+      ? { track: 'trade', cardType: 'commercialMonopoly', params: { resource: monopolyResource } }
+      : { cardType: 'monopoly', params: { resource: monopolyResource } };
+
+    socket.emit(eventName, payload, (response) => {
       if (response.success) {
         addNotification(`Monopoly on ${monopolyResource}!`);
         onClose();
@@ -97,11 +110,26 @@ function DevCardModal({ socket, myPlayer, isMyTurn, turnPhase, yearOfPlentyPicks
 
   // Group cards by type
   const cardCounts = {};
-  myPlayer.developmentCards?.forEach(card => {
-    cardCounts[card] = (cardCounts[card] || 0) + 1;
-  });
+  if (isCitiesAndKnights && myPlayer.progressCards) {
+    Object.keys(myPlayer.progressCards).forEach(track => {
+      myPlayer.progressCards[track].forEach(card => {
+        cardCounts[card] = (cardCounts[card] || 0) + 1;
+      });
+    });
+  } else {
+    myPlayer.developmentCards?.forEach(card => {
+      cardCounts[card] = (cardCounts[card] || 0) + 1;
+    });
+  }
 
-  const newCards = myPlayer.newDevCards || [];
+  let newCards = [];
+  if (isCitiesAndKnights && myPlayer.newProgressCards) {
+    Object.keys(myPlayer.newProgressCards).forEach(track => {
+      newCards.push(...myPlayer.newProgressCards[track]);
+    });
+  } else {
+    newCards = myPlayer.newDevCards || [];
+  }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -156,13 +184,13 @@ function DevCardModal({ socket, myPlayer, isMyTurn, turnPhase, yearOfPlentyPicks
         {!selectedCard && (
           <>
             {Object.keys(cardCounts).length === 0 && newCards.length === 0 ? (
-              <p className="no-cards">You have no development cards.</p>
+              <p className="no-cards">You have no {isCitiesAndKnights ? 'progress' : 'development'} cards.</p>
             ) : (
               <>
                 {/* Playable cards */}
                 <div className="card-list">
                   {Object.entries(cardCounts).map(([cardType, count]) => {
-                    const info = DEV_CARD_INFO[cardType];
+                    const info = isCitiesAndKnights ? PROGRESS_CARD_INFO[cardType] : DEV_CARD_INFO[cardType];
                     const isPlayable = info.playable && canPlay;
                     
                     return (
@@ -176,7 +204,7 @@ function DevCardModal({ socket, myPlayer, isMyTurn, turnPhase, yearOfPlentyPicks
                         {info.playable && (
                           <button
                             className="play-card-btn"
-                            onClick={() => handlePlayCard(cardType)}
+                            onClick={() => handlePlayCard(cardType, info.track)}
                             disabled={!isPlayable}
                           >
                             Play
@@ -190,10 +218,10 @@ function DevCardModal({ socket, myPlayer, isMyTurn, turnPhase, yearOfPlentyPicks
                 {/* New cards (bought this turn) */}
                 {newCards.length > 0 && (
                   <div className="new-cards">
-                    <h4>Bought This Turn (can't play yet)</h4>
+                    <h4>{isCitiesAndKnights ? "Drawn This Turn (can't play yet)" : "Bought This Turn (can't play yet)"}</h4>
                     <div className="card-list small">
                       {newCards.map((cardType, idx) => {
-                        const info = DEV_CARD_INFO[cardType];
+                        const info = isCitiesAndKnights ? PROGRESS_CARD_INFO[cardType] : DEV_CARD_INFO[cardType];
                         return (
                           <div key={idx} className="dev-card new">
                             <span className="card-icon">{info.icon}</span>

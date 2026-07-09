@@ -221,3 +221,23 @@
   color: #e0e0e0;
   font-weight: 600;
 }
+
+.player-city-improvements {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.improvement-stat {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.improvement-stat.science { color: #64dd17; }
+.improvement-stat.politics { color: #2196f3; }
+.improvement-stat.trade { color: #ffd600; }
