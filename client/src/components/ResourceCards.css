@@ -1,19 +1,34 @@
 .resource-cards {
   display: flex;
-  gap: 0.5rem;
+  gap: -10px;
   flex-wrap: wrap;
   justify-content: center;
+  padding: 10px 0;
+  transition: gap 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.resource-cards:hover:not(.compact) {
+  gap: 10px;
 }
 
 .resource-card {
   display: flex;
   flex-direction: column;
-  width: 65px;
-  background: linear-gradient(180deg, var(--bg-tertiary), var(--bg-secondary));
-  border: 2px solid var(--border-color);
+  width: 70px;
+  background: linear-gradient(135deg, #fdf4dc 0%, #e8d09f 100%);
+  border: 2px solid rgba(255, 255, 255, 0.4);
   border-radius: 8px;
   overflow: hidden;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: -2px 4px 10px rgba(0,0,0,0.5);
+  position: relative;
+  z-index: 1;
+}
+
+.resource-cards:hover .resource-card:not(.empty) {
+  transform: translateY(-15px);
+  z-index: 2;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.6);
 }
 
 .resource-card.empty {
@@ -31,9 +46,11 @@
 }
 
 .card-top {
-  background: var(--resource-color);
-  padding: 0.4rem;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.1) 100%);
+  background-color: var(--resource-color);
+  padding: 0.5rem;
   text-align: center;
+  border-bottom: 2px solid rgba(0,0,0,0.2);
 }
 
 .resource-icon {
@@ -49,17 +66,20 @@
 .resource-name {
   display: block;
   font-size: 0.7rem;
-  color: var(--text-muted);
+  color: #5c4a3d;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  font-weight: 700;
+  margin-bottom: 2px;
 }
 
 .resource-count {
   display: block;
   font-family: 'Cinzel', serif;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #2a1f18;
+  text-shadow: 1px 1px 0px rgba(255,255,255,0.5);
 }
 
 .selected-indicator {

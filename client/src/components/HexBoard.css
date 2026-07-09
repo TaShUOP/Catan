@@ -43,10 +43,19 @@
   transition: all 0.2s ease;
 }
 
+@keyframes pulseBuildSpot {
+  0% { transform: scale(1); filter: drop-shadow(0 0 4px var(--accent-gold)); }
+  50% { transform: scale(1.35); filter: drop-shadow(0 0 12px var(--accent-gold)); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 4px var(--accent-gold)); }
+}
+
 .vertex-placeholder:hover {
-  fill: rgba(212, 169, 66, 0.5);
+  fill: rgba(212, 169, 66, 0.8);
   stroke: var(--accent-gold);
   stroke-width: 3;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulseBuildSpot 1.2s infinite ease-in-out;
 }
 
 .edge-placeholder {

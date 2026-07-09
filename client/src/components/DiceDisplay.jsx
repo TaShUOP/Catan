@@ -15,7 +15,7 @@ function DiceDisplay({ roll, onRightClick }) {
 
   useEffect(() => {
     setAnimating(true);
-    const timer = setTimeout(() => setAnimating(false), 500);
+    const timer = setTimeout(() => setAnimating(false), 800);
     return () => clearTimeout(timer);
   }, [roll]);
 

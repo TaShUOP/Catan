@@ -295,85 +295,61 @@ function HexBoard({
           <circle cx="25" cy="50" r="1" fill="#64b5f6" opacity="0.25"/>
         </pattern>
         
-        {/* Forest pattern - Pine trees */}
-        <pattern id="forest-pattern" patternUnits="userSpaceOnUse" width="24" height="28">
-          <rect width="24" height="28" fill="#2d5a27"/>
-          {/* Tree 1 */}
-          <polygon points="6,24 12,24 9,4" fill="#1a4a1a"/>
-          <polygon points="6.5,20 11.5,20 9,8" fill="#236b23"/>
-          <polygon points="7,16 11,16 9,10" fill="#2d8a2d"/>
-          <rect x="8" y="24" width="2" height="4" fill="#5d4037"/>
-          {/* Tree 2 */}
-          <polygon points="18,28 24,28 21,10" fill="#1a4a1a" opacity="0.7"/>
-          <polygon points="18.5,24 23.5,24 21,14" fill="#236b23" opacity="0.7"/>
+        {/* Terrain Image Patterns */}
+        <pattern id="forest-pattern" patternUnits="objectBoundingBox" width="1" height="1">
+          <image href="/textures/forest.png" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
         </pattern>
-        
-        {/* Hills pattern - Clay/Brick texture */}
-        <pattern id="hills-pattern" patternUnits="userSpaceOnUse" width="20" height="16">
-          <rect width="20" height="16" fill="#c45a2c"/>
-          <rect x="0" y="0" width="9" height="7" fill="#b84a1c" rx="1"/>
-          <rect x="10" y="0" width="9" height="7" fill="#d46a3c" rx="1"/>
-          <rect x="5" y="8" width="9" height="7" fill="#b84a1c" rx="1"/>
-          <rect x="15" y="8" width="5" height="7" fill="#d46a3c" rx="1"/>
-          <rect x="0" y="8" width="4" height="7" fill="#d46a3c" rx="1"/>
+        <pattern id="hills-pattern" patternUnits="objectBoundingBox" width="1" height="1">
+          <image href="/textures/hills.png" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
         </pattern>
-        
-        {/* Pasture pattern - Meadow with grass */}
-        <pattern id="pasture-pattern" patternUnits="userSpaceOnUse" width="30" height="30">
-          <rect width="30" height="30" fill="#90c26a"/>
-          {/* Grass tufts */}
-          <path d="M5,28 Q6,22 5,20 M7,28 Q8,24 7,22 M9,28 Q10,23 9,21" stroke="#6ba352" strokeWidth="1.5" fill="none"/>
-          <path d="M20,28 Q21,23 20,21 M22,28 Q23,25 22,23 M24,28 Q25,24 24,22" stroke="#6ba352" strokeWidth="1.5" fill="none"/>
-          {/* Sheep */}
-          <ellipse cx="15" cy="15" rx="5" ry="3" fill="#f5f5f5" opacity="0.6"/>
-          <circle cx="11" cy="14" r="2" fill="#f5f5f5" opacity="0.6"/>
+        <pattern id="pasture-pattern" patternUnits="objectBoundingBox" width="1" height="1">
+          <image href="/textures/pasture.png" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
         </pattern>
-        
-        {/* Fields pattern - Wheat/Grain */}
-        <pattern id="fields-pattern" patternUnits="userSpaceOnUse" width="16" height="24">
-          <rect width="16" height="24" fill="#d4a942"/>
-          {/* Wheat stalks */}
-          <line x1="4" y1="24" x2="4" y2="6" stroke="#c49932" strokeWidth="1"/>
-          <ellipse cx="4" cy="6" rx="2" ry="4" fill="#e8c050"/>
-          <line x1="12" y1="24" x2="12" y2="8" stroke="#c49932" strokeWidth="1"/>
-          <ellipse cx="12" cy="8" rx="2" ry="4" fill="#e8c050"/>
-          <line x1="8" y1="24" x2="8" y2="10" stroke="#b08828" strokeWidth="1"/>
-          <ellipse cx="8" cy="10" rx="2" ry="3.5" fill="#d4b040"/>
+        <pattern id="fields-pattern" patternUnits="objectBoundingBox" width="1" height="1">
+          <image href="/textures/fields.png" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
         </pattern>
-        
-        {/* Mountains pattern - Rocky peaks */}
-        <pattern id="mountains-pattern" patternUnits="userSpaceOnUse" width="40" height="30">
-          <rect width="40" height="30" fill="#6b6b6b"/>
-          {/* Mountain 1 */}
-          <polygon points="0,30 20,5 40,30" fill="#5a5a5a"/>
-          <polygon points="10,30 20,10 30,30" fill="#7a7a7a"/>
-          {/* Snow cap */}
-          <polygon points="17,10 20,5 23,10 20,12" fill="#e8e8e8"/>
-          {/* Rocky texture */}
-          <line x1="8" y1="25" x2="12" y2="20" stroke="#4a4a4a" strokeWidth="1"/>
-          <line x1="28" y1="25" x2="32" y2="18" stroke="#4a4a4a" strokeWidth="1"/>
+        <pattern id="mountains-pattern" patternUnits="objectBoundingBox" width="1" height="1">
+          <image href="/textures/mountain.png" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
         </pattern>
-        
-        {/* Desert pattern - Sand dunes */}
-        <pattern id="desert-pattern" patternUnits="userSpaceOnUse" width="40" height="20">
-          <rect width="40" height="20" fill="#e8d5a3"/>
-          {/* Sand dunes */}
-          <path d="M0,18 Q10,12 20,18 Q30,12 40,18" fill="#dcc890" opacity="0.6"/>
-          <path d="M0,14 Q10,8 20,14 Q30,8 40,14" fill="#d4c080" opacity="0.4"/>
-          {/* Cactus */}
-          <rect x="30" y="8" width="2" height="10" fill="#5a8a3a" rx="1"/>
-          <rect x="26" y="11" width="6" height="2" fill="#5a8a3a" rx="1"/>
+        <pattern id="desert-pattern" patternUnits="objectBoundingBox" width="1" height="1">
+          <image href="/textures/desert.png" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
         </pattern>
         
         {/* Drop shadow for 3D effect */}
         <filter id="hex-shadow" x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="2" dy="5" stdDeviation="3" floodColor="#0a0500" floodOpacity="0.8"/>
+          <feDropShadow dx="3" dy="6" stdDeviation="4" floodColor="#000000" floodOpacity="0.75"/>
         </filter>
         
         {/* Building shadow */}
         <filter id="building-shadow" x="-50%" y="-50%" width="200%" height="200%">
           <feDropShadow dx="2" dy="4" stdDeviation="2" floodColor="#000000" floodOpacity="0.7"/>
         </filter>
+
+        {/* Terrain Gradients for 3D effect */}
+        <radialGradient id="forestGradient" cx="30%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#388e3c" />
+          <stop offset="100%" stopColor="#1b5e20" />
+        </radialGradient>
+        <radialGradient id="pastureGradient" cx="30%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#aed581" />
+          <stop offset="100%" stopColor="#689f38" />
+        </radialGradient>
+        <radialGradient id="fieldsGradient" cx="30%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#ffd54f" />
+          <stop offset="100%" stopColor="#f57f17" />
+        </radialGradient>
+        <radialGradient id="hillsGradient" cx="30%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#e64a19" />
+          <stop offset="100%" stopColor="#bf360c" />
+        </radialGradient>
+        <radialGradient id="mountainsGradient" cx="30%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#90a4ae" />
+          <stop offset="100%" stopColor="#455a64" />
+        </radialGradient>
+        <radialGradient id="desertGradient" cx="30%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#ffe082" />
+          <stop offset="100%" stopColor="#ffb300" />
+        </radialGradient>
       </defs>
       
       <g transform={`translate(${offsetX}, ${offsetY})`}>
@@ -441,6 +417,19 @@ function HexBoard({
             return patterns[terrain] || hex.color;
           };
           
+          // Get gradient ID based on terrain type
+          const getTerrainGradient = (terrain) => {
+            const gradients = {
+              'forest': 'url(#forestGradient)',
+              'hills': 'url(#hillsGradient)',
+              'pasture': 'url(#pastureGradient)',
+              'fields': 'url(#fieldsGradient)',
+              'mountains': 'url(#mountainsGradient)',
+              'desert': 'url(#desertGradient)'
+            };
+            return gradients[terrain] || hex.color;
+          };
+          
           return (
             <g 
               key={key} 
@@ -449,20 +438,25 @@ function HexBoard({
               onContextMenu={(e) => onHexRightClick && onHexRightClick(e, hex)}
               style={{ cursor: 'context-menu' }}
             >
-              {/* Base color layer */}
+              {/* 3D Base (wall) */}
               <path
-                d={hexPath(pos.x, pos.y, HEX_SIZE)}
-                fill={hex.color}
-                stroke="#2a1a0a"
-                strokeWidth="4"
+                d={hexPath(pos.x, pos.y + 12, HEX_SIZE)}
+                fill="#1a1005"
                 filter="url(#hex-shadow)"
               />
               
-              {/* Pattern overlay */}
+              {/* Base color layer (just a stroke outline now, fill covered by pattern) */}
+              <path
+                d={hexPath(pos.x, pos.y, HEX_SIZE)}
+                fill="#000"
+                stroke="#2a1a0a"
+                strokeWidth="4"
+              />
+              
+              {/* Image Texture Pattern overlay */}
               <path
                 d={hexPath(pos.x, pos.y, HEX_SIZE - 2)}
                 fill={getTerrainPattern(hex.terrain)}
-                opacity="0.85"
               />
               
               {/* Inner hex highlight */}

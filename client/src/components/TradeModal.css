@@ -369,3 +369,94 @@
   border-color: var(--accent-green);
 }
 
+/* =====================
+   DRAG AND DROP UI 
+   ===================== */
+
+.drag-drop-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.dnd-top-row, .dnd-bottom-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dnd-zone {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 1rem;
+  min-height: 120px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.dnd-zone.drag-over {
+  background: rgba(255, 200, 50, 0.2);
+  border-color: #f39c12;
+}
+
+.dnd-zone h4 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #ffe066;
+  text-align: center;
+}
+
+.dnd-hint {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  margin: -4px 0 8px 0;
+}
+
+.dnd-resource-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.dnd-card {
+  width: 45px;
+  height: 60px;
+  background: linear-gradient(135deg, #fdf4dc 0%, #e8d09f 100%);
+  border: 1px solid rgba(0,0,0,0.3);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease;
+}
+
+.dnd-card:active {
+  cursor: grabbing;
+  transform: scale(1.05);
+}
+
+.dnd-card .icon {
+  font-size: 1.5rem;
+}
+
+.dnd-card .count {
+  font-weight: bold;
+  color: #2a1f18;
+  font-size: 1rem;
+}
+
+.dnd-card.infinite .plus {
+  font-weight: bold;
+  color: #2d5a27;
+  font-size: 1.2rem;
+}
+

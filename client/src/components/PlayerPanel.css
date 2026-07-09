@@ -1,11 +1,12 @@
 .player-panel {
-  background: var(--bg-parchment);
-  border: 3px solid var(--border-color);
+  background-color: rgba(30, 20, 10, 0.45);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 2px;
   padding: 0.5rem 0.6rem;
   transition: all 0.3s ease;
-  box-shadow: inset 0 0 10px rgba(139, 69, 19, 0.2), 0 4px 6px rgba(0,0,0,0.4);
-  color: var(--text-dark);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  color: #fff;
   position: relative;
 }
 
@@ -23,7 +24,7 @@
 }
 
 .player-panel.is-me {
-  background: linear-gradient(135deg, var(--bg-parchment), #ebd2a4);
+  background: linear-gradient(135deg, rgba(30, 20, 10, 0.45), rgba(235, 210, 164, 0.2));
 }
 
 .player-header {
@@ -57,7 +58,7 @@
 .player-name {
   flex: 1;
   font-weight: 700;
-  color: var(--text-dark);
+  color: #fff;
   font-family: 'Cinzel', serif;
   display: flex;
   align-items: center;

@@ -40,6 +40,38 @@ function TradeModal({ socket, gameState, myPlayer, isMyTurn, onClose, addNotific
     setRequest({ ...request, [resource]: newAmount });
   };
 
+  const handleDragStart = (e, resource, source) => {
+    e.dataTransfer.setData('resource', resource);
+    e.dataTransfer.setData('source', source);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.currentTarget.classList.add('drag-over');
+  };
+
+  const handleDragLeave = (e) => {
+    e.currentTarget.classList.remove('drag-over');
+  };
+
+  const handleDrop = (e, targetZone) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    
+    const resource = e.dataTransfer.getData('resource');
+    const source = e.dataTransfer.getData('source');
+
+    if (source === 'hand' && targetZone === 'offer') {
+      updateOffer(resource, 1);
+    } else if (source === 'offer' && targetZone === 'hand') {
+      updateOffer(resource, -1);
+    } else if (source === 'pool' && targetZone === 'request') {
+      updateRequest(resource, 1);
+    } else if (source === 'request' && targetZone === 'pool') {
+      updateRequest(resource, -1);
+    }
+  };
+
   const handleProposeTrade = () => {
     const hasOffer = Object.values(offer).some(v => v > 0);
     const hasRequest = Object.values(request).some(v => v > 0);
@@ -199,39 +231,112 @@ function TradeModal({ socket, gameState, myPlayer, isMyTurn, onClose, addNotific
 
             {!pendingTrade && (
               <>
-                <div className="trade-builder">
-                  {/* Your offer */}
-                  <div className="trade-section">
-                    <h4>You Offer:</h4>
-                    <div className="resource-selectors">
-                      {RESOURCES.map(r => (
-                        <div key={r} className="resource-selector">
-                          <span className="icon">{RESOURCE_ICONS[r]}</span>
-                          <div className="selector-controls">
-                            <button onClick={() => updateOffer(r, -1)} disabled={offer[r] === 0}>−</button>
-                            <span className="amount">{offer[r]}</span>
-                            <button onClick={() => updateOffer(r, 1)} disabled={offer[r] >= myPlayer.resources[r]}>+</button>
+                <div className="trade-builder drag-drop-builder">
+                  <div className="dnd-top-row">
+                    {/* Offer Drop Zone */}
+                    <div 
+                      className="dnd-zone offer-zone"
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, 'offer')}
+                    >
+                      <h4>🎁 You Offer</h4>
+                      <p className="dnd-hint">Drag from Your Hand</p>
+                      <div className="dnd-resource-list">
+                        {RESOURCES.map(r => offer[r] > 0 && (
+                          <div 
+                            key={r} 
+                            className="dnd-card"
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, r, 'offer')}
+                            onClick={() => updateOffer(r, -1)} // Click as fallback
+                          >
+                            <span className="icon">{RESOURCE_ICONS[r]}</span>
+                            <span className="count">{offer[r]}</span>
                           </div>
-                          <span className="available">({myPlayer.resources[r]})</span>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="trade-arrow">⇄</div>
+
+                    {/* Request Drop Zone */}
+                    <div 
+                      className="dnd-zone request-zone"
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, 'request')}
+                    >
+                      <h4>🙏 You Request</h4>
+                      <p className="dnd-hint">Drag from Pool</p>
+                      <div className="dnd-resource-list">
+                        {RESOURCES.map(r => request[r] > 0 && (
+                          <div 
+                            key={r} 
+                            className="dnd-card"
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, r, 'request')}
+                            onClick={() => updateRequest(r, -1)}
+                          >
+                            <span className="icon">{RESOURCE_ICONS[r]}</span>
+                            <span className="count">{request[r]}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
-                  {/* What you want */}
-                  <div className="trade-section">
-                    <h4>You Request:</h4>
-                    <div className="resource-selectors">
-                      {RESOURCES.map(r => (
-                        <div key={r} className="resource-selector">
-                          <span className="icon">{RESOURCE_ICONS[r]}</span>
-                          <div className="selector-controls">
-                            <button onClick={() => updateRequest(r, -1)} disabled={request[r] === 0}>−</button>
-                            <span className="amount">{request[r]}</span>
-                            <button onClick={() => updateRequest(r, 1)}>+</button>
+                  <div className="dnd-bottom-row">
+                    {/* Your Hand (Source for Offer) */}
+                    <div 
+                      className="dnd-zone hand-zone"
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, 'hand')}
+                    >
+                      <h4>🤚 Your Hand</h4>
+                      <div className="dnd-resource-list">
+                        {RESOURCES.map(r => {
+                          const available = myPlayer.resources[r] - offer[r];
+                          if (available <= 0) return null;
+                          return (
+                            <div 
+                              key={r} 
+                              className="dnd-card"
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, r, 'hand')}
+                              onClick={() => updateOffer(r, 1)}
+                            >
+                              <span className="icon">{RESOURCE_ICONS[r]}</span>
+                              <span className="count">{available}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Global Pool (Source for Request) */}
+                    <div 
+                      className="dnd-zone pool-zone"
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, 'pool')}
+                    >
+                      <h4>🌍 Resources</h4>
+                      <div className="dnd-resource-list compact">
+                        {RESOURCES.map(r => (
+                          <div 
+                            key={r} 
+                            className="dnd-card infinite"
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, r, 'pool')}
+                            onClick={() => updateRequest(r, 1)}
+                          >
+                            <span className="icon">{RESOURCE_ICONS[r]}</span>
+                            <span className="plus">+</span>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
