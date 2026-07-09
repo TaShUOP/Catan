@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: ./server
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - catan-net
+
+  client:
+    build:
+      context: ./client
+      args:
+        - VITE_SERVER_URL=http://localhost:3001
+    ports:
+      - "5173:80"
+    depends_on:
+      - server
+    restart: unless-stopped
+    networks:
+      - catan-net
+
+networks:
+  catan-net:
+    driver: bridge
