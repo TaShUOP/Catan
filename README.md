@@ -49,6 +49,26 @@ npm run dev
 
 Open http://localhost:5173 in your browser.
 
+### 🐳 Run with Docker (Recommended for Hosting)
+
+If you have Docker and Docker Compose installed, you can spin up both the client and server instantly:
+
+```bash
+cd catan
+docker-compose up -d --build
+```
+
+The game will be available at http://localhost:5173. The server runs on port 3001.
+
+### 🏗️ CI/CD with Jenkins
+
+This repository includes a declarative `Jenkinsfile` for automated builds. It handles:
+- Checking out the code
+- Building the frontend and backend Docker images
+- Testing the container deployment
+
+Simply point your Jenkins Pipeline job to this repository to automatically build the project!
+
 ## 🌐 Deployment
 
 **Live Game:** [https://catan.ra9.cloudns.asia](https://catan.ra9.cloudns.asia)
