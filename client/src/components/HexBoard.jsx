@@ -748,30 +748,39 @@ function HexBoard({
                 points={`${p1x},${p1y} ${p2x},${p2y} ${p3x},${p3y} ${p4x},${p4y}`} 
                 fill="#a0785a" 
               />
-              
-              {/* 3D Crate */}
-              <g className="crate">
-                <polygon points={leftFace} fill={leftColor} stroke="#3e230b" strokeWidth="0.5" />
-                <polygon points={rightFace} fill={rightColor} stroke="#3e230b" strokeWidth="0.5" />
-                <polygon points={topFace} fill={topColor} stroke="#3e230b" strokeWidth="0.5" />
+              {/* Ship */}
+              <g className="ship">
+                {/* Hull Shadow */}
+                <ellipse cx={cx} cy={cy + 4} rx="14" ry="7" fill="rgba(0,0,0,0.3)" />
+                {/* Hull Top/Inner */}
+                <path d={`M${cx-12},${cy-4} L${cx+12},${cy-4} L${cx+18},${cy} L${cx-18},${cy} Z`} fill={leftColor} stroke="#3e230b" strokeWidth="0.5" />
+                {/* Hull Side */}
+                <path d={`M${cx-18},${cy} L${cx+18},${cy} L${cx+12},${cy+6} L${cx-12},${cy+6} Z`} fill={rightColor} stroke="#3e230b" strokeWidth="0.5" />
                 
-                {/* Port info on crate */}
+                {/* Mast */}
+                <rect x={cx-1} y={cy-24} width="2" height="22" fill="#3e230b" />
+                
+                {/* Sail */}
+                <path d={`M${cx+1},${cy-22} Q${cx+18},${cy-16} ${cx+16},${cy-6} L${cx+1},${cy-4} Z`} fill="#f5f5f5" stroke="#dcdcdc" strokeWidth="1" />
+                
+                {/* Port Icon on Sail */}
                 <text
-                  x={cx}
-                  y={cy - h - 1}
+                  x={cx + 7}
+                  y={cy - 10}
                   textAnchor="middle"
-                  fontSize="12"
+                  fontSize="10"
                   fontWeight="bold"
-                  fill="white"
-                  style={{ textShadow: '1px 1px 2px black' }}
+                  fill="#333"
                 >
                   {port.icon}
                 </text>
+                
+                {/* Trade Ratio Badge below ship */}
                 <text
                   x={cx}
-                  y={cy - 2}
+                  y={cy + 16}
                   textAnchor="middle"
-                  fontSize="8"
+                  fontSize="9"
                   fill="white"
                   fontWeight="bold"
                   style={{ textShadow: '1px 1px 2px black' }}
