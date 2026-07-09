@@ -19,7 +19,10 @@ FROM nginx:stable-alpine as production-stage
 
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 
-# Expose port 80
-EXPOSE 80
+# Expose port 5173
+EXPOSE 5173
+
+# Change default nginx port from 80 to 5173
+RUN sed -i 's/listen  *80;/listen 5173;/' /etc/nginx/conf.d/default.conf
 
 CMD ["nginx", "-g", "daemon off;"]

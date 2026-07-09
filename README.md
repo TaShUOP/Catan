@@ -51,11 +51,20 @@ Open http://localhost:5173 in your browser.
 
 ### 🐳 Run with Docker (Recommended for Hosting)
 
-If you have Docker and Docker Compose installed, you can spin up both the client and server instantly:
+Since the client and server have their own Dockerfiles, you can build and run them individually:
 
+**1. Start the Server:**
 ```bash
-cd catan
-docker-compose up -d --build
+cd server
+docker build -t catan-server .
+docker run -d -p 3001:3001 --name catan-backend catan-server
+```
+
+**2. Start the Client:**
+```bash
+cd ../client
+docker build -t catan-client .
+docker run -d -p 5173:5173 --name catan-frontend catan-client
 ```
 
 The game will be available at http://localhost:5173. The server runs on port 3001.

@@ -16,17 +16,17 @@ pipeline {
 
         stage('Build Images') {
             steps {
-                echo 'Building Docker images using docker-compose...'
-                // Using docker-compose to build the client and server images
-                sh 'docker-compose build'
+                echo 'Building Docker images...'
+                sh 'docker build -t catan-server ./server'
+                sh 'docker build -t catan-client --build-arg VITE_SERVER_URL=http://localhost:3001 ./client'
             }
         }
 
         stage('Test Deployment') {
             steps {
                 echo 'Testing containers startup...'
-                // Spin up the containers in detached mode
-                sh 'docker-compose up -d'
+                sh 'docker run -d --name catan-server-test -p 3001:3001 catan-server'
+                sh 'docker run -d --name catan-client-test -p 5173:5173 catan-client'
                 
                 // Wait a few seconds for services to initialize
                 sleep time: 10, unit: 'SECONDS'
