@@ -280,6 +280,8 @@ function Lobby({ onCreateGame, onJoinGame, error, setError, serverUrl, setServer
                   Specify a custom server address to play on a private instance.
                 </p>
               </div>
+
+
               <button className="submit-btn settings-save-btn" onClick={handleSaveSettings}>
                 Save & Reconnect
               </button>
