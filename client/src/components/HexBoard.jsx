@@ -284,35 +284,32 @@ function HexBoard({
     >
       <defs>
         {/* Water pattern - vibrant ocean */}
-        <pattern id="water-pattern" patternUnits="userSpaceOnUse" width="60" height="60">
-          <rect width="60" height="60" fill="#1565a8"/>
-          <path d="M0 10 Q15 3, 30 10 T60 10" stroke="#2196f3" strokeWidth="2" fill="none" opacity="0.6"/>
-          <path d="M0 25 Q15 18, 30 25 T60 25" stroke="#42a5f5" strokeWidth="1.5" fill="none" opacity="0.5"/>
-          <path d="M0 40 Q15 33, 30 40 T60 40" stroke="#1e88e5" strokeWidth="1.5" fill="none" opacity="0.4"/>
-          <path d="M0 55 Q15 48, 30 55 T60 55" stroke="#2196f3" strokeWidth="1" fill="none" opacity="0.3"/>
-          <circle cx="10" cy="5" r="1" fill="#64b5f6" opacity="0.4"/>
-          <circle cx="45" cy="35" r="1.5" fill="#90caf9" opacity="0.3"/>
-          <circle cx="25" cy="50" r="1" fill="#64b5f6" opacity="0.25"/>
+        <pattern id="water-pattern" patternUnits="userSpaceOnUse" width="120" height="120">
+          <rect width="120" height="120" fill="#09315c"/>
+          <path d="M 0 20 Q 30 5, 60 20 T 120 20 L 120 120 L 0 120 Z" fill="#0d4277" opacity="0.85"/>
+          <path d="M 0 45 Q 30 60, 60 45 T 120 45 L 120 120 L 0 120 Z" fill="#115596" opacity="0.85"/>
+          <path d="M 0 70 Q 30 55, 60 70 T 120 70 L 120 120 L 0 120 Z" fill="#1668b5" opacity="0.85"/>
+          <path d="M 0 95 Q 30 110, 60 95 T 120 95 L 120 120 L 0 120 Z" fill="#1a78d1" opacity="0.85"/>
         </pattern>
         
         {/* Terrain Image Patterns */}
-        <pattern id="forest-pattern" patternUnits="objectBoundingBox" width="1" height="1">
-          <image href="/textures/forest.png" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
+        <pattern id="forest-pattern" patternUnits="userSpaceOnUse" width="87" height="100">
+          <image href="/textures/forest.png" x="-36" y="-30" width="160" height="160" preserveAspectRatio="xMidYMid slice" />
         </pattern>
-        <pattern id="hills-pattern" patternUnits="objectBoundingBox" width="1" height="1">
-          <image href="/textures/hills.png" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
+        <pattern id="hills-pattern" patternUnits="userSpaceOnUse" width="87" height="100">
+          <image href="/textures/hills.png" x="-36" y="-30" width="160" height="160" preserveAspectRatio="xMidYMid slice" />
         </pattern>
-        <pattern id="pasture-pattern" patternUnits="objectBoundingBox" width="1" height="1">
-          <image href="/textures/pasture.png" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
+        <pattern id="pasture-pattern" patternUnits="userSpaceOnUse" width="87" height="100">
+          <image href="/textures/pasture.png" x="-36" y="-30" width="160" height="160" preserveAspectRatio="xMidYMid slice" />
         </pattern>
-        <pattern id="fields-pattern" patternUnits="objectBoundingBox" width="1" height="1">
-          <image href="/textures/fields.png" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
+        <pattern id="fields-pattern" patternUnits="userSpaceOnUse" width="87" height="100">
+          <image href="/textures/fields.png" x="-36" y="-30" width="160" height="160" preserveAspectRatio="xMidYMid slice" />
         </pattern>
-        <pattern id="mountains-pattern" patternUnits="objectBoundingBox" width="1" height="1">
-          <image href="/textures/mountain.png" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
+        <pattern id="mountains-pattern" patternUnits="userSpaceOnUse" width="87" height="100">
+          <image href="/textures/mountain.png" x="-36" y="-30" width="160" height="160" preserveAspectRatio="xMidYMid slice" />
         </pattern>
-        <pattern id="desert-pattern" patternUnits="objectBoundingBox" width="1" height="1">
-          <image href="/textures/desert.png" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
+        <pattern id="desert-pattern" patternUnits="userSpaceOnUse" width="87" height="100">
+          <image href="/textures/desert.png" x="-36" y="-30" width="160" height="160" preserveAspectRatio="xMidYMid slice" />
         </pattern>
         
         {/* Drop shadow for 3D effect */}
@@ -470,14 +467,31 @@ function HexBoard({
               {/* Number token */}
               {hex.number && (
                 <g>
+                  {/* 3D disc thickness */}
+                  <circle 
+                    cx={pos.x} 
+                    cy={pos.y + 4} 
+                    r="16"
+                    fill="#5a3a22"
+                    filter="url(#building-shadow)"
+                  />
+                  {/* 3D disc top face */}
                   <circle 
                     cx={pos.x} 
                     cy={pos.y} 
                     r="16"
                     fill="#e2cca6"
                     stroke="#5a3a22"
-                    strokeWidth="2"
-                    filter="url(#building-shadow)"
+                    strokeWidth="1"
+                  />
+                  {/* Top edge highlight */}
+                  <circle 
+                    cx={pos.x} 
+                    cy={pos.y} 
+                    r="14.5"
+                    fill="none"
+                    stroke="rgba(255, 255, 255, 0.6)"
+                    strokeWidth="1.5"
                   />
                   <text
                     x={pos.x}
@@ -688,54 +702,75 @@ function HexBoard({
             perpX = -perpX;
             perpY = -perpY;
           }
-          // Position port at a good distance from the edge center
-          const portX = midX + perpX * 28;
-          const portY = midY + perpY * 28;
           
-          const portColor = port.resource ? '#8b4513' : '#4a4a4a';
+          // Dock geometry
+          const dockWidth = 14;
+          const dockLen = 30;
+          const thickness = 6;
+          
+          // Unit vector along the edge
+          let uX = edgeX / perpLen;
+          let uY = edgeY / perpLen;
+          
+          // Top plank corners
+          const p1x = midX - uX * (dockWidth / 2);
+          const p1y = midY - uY * (dockWidth / 2);
+          const p2x = midX + uX * (dockWidth / 2);
+          const p2y = midY + uY * (dockWidth / 2);
+          const p3x = p2x + perpX * dockLen;
+          const p3y = p2y + perpY * dockLen;
+          const p4x = p1x + perpX * dockLen;
+          const p4y = p1y + perpY * dockLen;
+          
+          // Crate geometry
+          const cx = midX + perpX * 24;
+          const cy = midY + perpY * 24;
+          const s = 10; // width scale
+          const h = 12; // height scale
+          
+          const topFace = `${cx},${cy-h} ${cx-s},${cy-h-s/2} ${cx},${cy-h-s} ${cx+s},${cy-h-s/2}`;
+          const leftFace = `${cx},${cy-h} ${cx-s},${cy-h-s/2} ${cx-s},${cy-s/2} ${cx},${cy}`;
+          const rightFace = `${cx},${cy-h} ${cx+s},${cy-h-s/2} ${cx+s},${cy-s/2} ${cx},${cy}`;
+          
+          const topColor = port.resource ? '#a0522d' : '#6a6a6a';
+          const leftColor = port.resource ? '#8b4513' : '#4a4a4a';
+          const rightColor = port.resource ? '#6b340a' : '#3a3a3a';
           
           return (
             <g key={port.id} className="port">
-              {/* Connection lines from port to vertices */}
-              <line
-                x1={portX}
-                y1={portY}
-                x2={v1Pos.x}
-                y2={v1Pos.y}
-                stroke="#8b7355"
-                strokeWidth="2"
-                strokeDasharray="3,3"
-                opacity="0.5"
+              {/* Dock Side Wall (Thickness) */}
+              <polygon 
+                points={`${p1x},${p1y} ${p2x},${p2y} ${p3x},${p3y} ${p4x},${p4y} ${p4x},${p4y+thickness} ${p3x},${p3y+thickness} ${p2x},${p2y+thickness} ${p1x},${p1y+thickness}`} 
+                fill="#5c4033" 
               />
-              <line
-                x1={portX}
-                y1={portY}
-                x2={v2Pos.x}
-                y2={v2Pos.y}
-                stroke="#8b7355"
-                strokeWidth="2"
-                strokeDasharray="3,3"
-                opacity="0.5"
+              {/* Dock Top Plank */}
+              <polygon 
+                points={`${p1x},${p1y} ${p2x},${p2y} ${p3x},${p3y} ${p4x},${p4y}`} 
+                fill="#a0785a" 
               />
               
-              {/* Port ship/dock icon - smaller and more compact */}
-              <g transform={`translate(${portX}, ${portY})`}>
-                <circle
-                  r="13"
-                  fill={portColor}
-                  stroke="#5a3d25"
-                  strokeWidth="1.5"
-                />
+              {/* 3D Crate */}
+              <g className="crate">
+                <polygon points={leftFace} fill={leftColor} stroke="#3e230b" strokeWidth="0.5" />
+                <polygon points={rightFace} fill={rightColor} stroke="#3e230b" strokeWidth="0.5" />
+                <polygon points={topFace} fill={topColor} stroke="#3e230b" strokeWidth="0.5" />
+                
+                {/* Port info on crate */}
                 <text
+                  x={cx}
+                  y={cy - h - 1}
                   textAnchor="middle"
-                  y="4"
-                  fontSize="11"
+                  fontSize="12"
+                  fontWeight="bold"
+                  fill="white"
+                  style={{ textShadow: '1px 1px 2px black' }}
                 >
                   {port.icon}
                 </text>
                 <text
+                  x={cx}
+                  y={cy - 2}
                   textAnchor="middle"
-                  y="22"
                   fontSize="8"
                   fill="white"
                   fontWeight="bold"
