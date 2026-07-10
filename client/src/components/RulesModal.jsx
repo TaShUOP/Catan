@@ -170,7 +170,7 @@ function RulesModal({ onClose }) {
 **What's Different:**
 • Larger board with more hexes and ports
 • 4 additional player colors: Green, Purple, Coral, and Steel Blue
-• More resource cards in the supply
+• Larger board with more hexes, ports, and resource cards
 • Additional development cards
 
 **Special Building Phase:**
@@ -183,6 +183,31 @@ This ensures players don't accumulate too many cards between turns.
 
 **Strategy Tip:**
 With more players, resources become more scarce. Focus on building efficiently and getting good port access early!
+      `
+    },
+    citiesAndKnights: {
+      title: '⚔️ Cities & Knights',
+      content: `
+**Commodities**
+• Forests produce 1 Lumber + 1 Paper for Cities
+• Mountains produce 1 Ore + 1 Coin for Cities
+• Pastures produce 1 Wool + 1 Cloth for Cities
+
+**City Improvements & Progress Cards**
+• Use commodities to build City Improvements (Science 📗, Politics 📘, Trade 📒)
+• When the Event Die matches your improvement level or lower (on the Red Die), you draw a Progress Card!
+• Progress cards replace standard Development Cards
+
+**The Barbarians**
+• The Event Die can advance the Barbarian ship
+• When it reaches 7, the Barbarians attack!
+• If players have enough active Knights to defend, the highest contributor earns a Defender of Catan VP
+• If players fail, the lowest contributor's city is pillaged and downgraded to a settlement!
+
+**Knights**
+• Recruit Knights with Ore + Wool
+• Activate them with Grain (required to defend Catan!)
+• Upgrade them to Strong or Mighty knights for more defense
       `
     }
   };
